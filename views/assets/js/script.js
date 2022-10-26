@@ -10,8 +10,8 @@ async function validate () {
   document.getElementById("spectralResult").innerHTML = "Validating...";
 
 
-  let spectralRule = document.getElementById('spectralRule').value;
-  let openApiSpec = document.getElementById('openApiSpec').value;
+  let spectralRule = spectralRuleEditor.getValue(); 
+  let openApiSpec = openApiSpecEditor.getValue(); 
 
   let formBody = [
     `spectralRule=${encodeURIComponent(spectralRule)}`,
@@ -31,8 +31,6 @@ async function validate () {
     .then(data => {
       document.getElementById("jsonPathResult").innerHTML = JSON.stringify(data.jsonPathMatches, null, 2);
 
-      console.log(data.spectralResults);
-
       if(!data.spectralResults || data.spectralResults.length == 0) {
         document.getElementById("spectralResult").innerHTML = "No issues found!";
       } else {
@@ -46,3 +44,14 @@ async function validate () {
 
     })
 }
+
+//Set up the editors.
+var spectralRuleEditor = ace.edit("spectralRule");
+spectralRuleEditor.setTheme("ace/theme/twilight");
+spectralRuleEditor.session.setMode("ace/mode/yaml");
+spectralRuleEditor.session.setUseSoftTabs(true);
+
+var openApiSpecEditor = ace.edit("openApiSpec");
+openApiSpecEditor.setTheme("ace/theme/twilight");
+openApiSpecEditor.session.setMode("ace/mode/yaml");
+openApiSpecEditor.session.setUseSoftTabs(true);

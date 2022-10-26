@@ -1,10 +1,16 @@
-textarea {
-  width: 100%;
-  height: 400px;
-  font-family: 'Courier New', Courier, monospace;
-}
-
 pre {
   max-height: 400px;
   overflow: scroll;
 }
+
+#spectralRule, #openApiSpec {
+  width: 36vw;
+  height: 400px;
+  position: relative;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  font-size: 1.1em;
+} 
+

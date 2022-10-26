@@ -1,7 +1,7 @@
 <div class="row">
   <div class="col-5 px-5">
     <h2>Spectral Rules (only YAML supported.)</h2>
-    <textarea class="form-control" id="spectralRule">
+    <pre id="spectralRule">
 rules:
   paths-kebab-case:
     description: Paths should be kebab-case.
@@ -12,7 +12,7 @@ rules:
       function: pattern
       functionOptions:
         match: "^(\/|[a-z0-9-.]+|{[a-zA-Z0-9_]+})+$"
-  </textarea>
+  </pre>
   </div>
   <div class="col-1"></div>
   <div class="col-5">
@@ -33,7 +33,7 @@ rules:
 <div class="row">
   <div class="col-5 px-5">
     <h2>OpenAPI Spec (only YAML supported.)</h2>
-    <textarea class="form-control" id="openApiSpec">
+    <pre id="openApiSpec">
 openapi: 3.0.2
 info:
   title: Swagger Petstore - OpenAPI 3.0
@@ -835,7 +835,7 @@ components:
       name: api_key
       in: header
 
-    </textarea>
+    </pre>
   </div>
   <div class="col-1"></div>
   <div class="col-5">
