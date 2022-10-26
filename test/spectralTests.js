@@ -12,11 +12,12 @@ describe('test suite', async () => {
       openapi = fs.readFileSync(`${__dirname}/openapi.yaml`)
     })
 
-    it('Validate PetStore API', done => {
+    it('Validates PetStore API', done => {
       validate(ruleset, openapi)
         .then(results => {
-          assert(results.length > 0, 'Results is empty.')
-          results.forEach(result => {
+          let spectralResults = results.spectralResults;
+          assert(spectralResults.length > 0, 'Results is empty.')
+          spectralResults.forEach(result => {
             assert(result.code == 'paths-kebab-case', 'Code is not correct.')
             assert(
               typeof result.severity == 'number',
