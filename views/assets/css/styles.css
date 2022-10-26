@@ -1,0 +1,10 @@
+textarea {
+  width: 100%;
+  height: 400px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+pre {
+  max-height: 400px;
+  overflow: scroll;
+}
