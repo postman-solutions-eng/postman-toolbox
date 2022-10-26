@@ -5,6 +5,11 @@
  */
 
 async function validate () {
+
+  document.getElementById("jsonPathResult").innerHTML = "Validating...";
+  document.getElementById("spectralResult").innerHTML = "Validating...";
+
+
   let spectralRule = document.getElementById('spectralRule').value;
   let openApiSpec = document.getElementById('openApiSpec').value;
 

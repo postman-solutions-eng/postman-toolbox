@@ -1,26 +1,25 @@
 {
-  "name": "spectral-tester",
-  "version": "1.0.0",
-  "description": "",
+  "name": "governance-rules-test-harness",
+  "version": "0.0.1",
+  "description": "Test harness to check spectral rules against an OpenAPI spec.",
   "main": "app.js",
   "scripts": {
     "test": "mocha"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Jordan Walsh (jordan.walsh@postman.com)",
+  "license": "MIT",
   "dependencies": {
     "@stoplight/spectral-core": "^1.15.1",
     "@stoplight/spectral-functions": "^1.7.1",
     "@stoplight/spectral-parsers": "^1.0.2",
     "@stoplight/spectral-ruleset-bundler": "^1.4.0",
     "@stoplight/spectral-runtime": "^1.1.2",
+    "aws-serverless-express": "^3.4.0",
     "express": "^4.18.2",
     "express-handlebars": "^6.0.6",
     "fs": "^0.0.1-security",
     "js-yaml": "^4.1.0",
     "jsonpath-plus": "^7.2.0",
-    "memfs": "^3.4.7",
-    "prismjs": "^1.29.0",
     "uuidv4": "^6.2.13"
   },
   "devDependencies": {

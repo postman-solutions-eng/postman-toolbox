@@ -3,8 +3,6 @@ const exphbs = require('express-handlebars');
 const qs = require('qs')
 const validate = require('./lib/spectral').validate;
 
-const Prism = require('prismjs');
-
 let app = express();
 let hbs = exphbs.create({
   defaultLayout: 'main',
@@ -47,6 +45,8 @@ app.post('/validate', (req,res) => {
   })
 })
 
-app.listen(3001, () => {
-  console.log('Example app listening on port 3001!');
-})
+// app.listen(3001, () => {
+//   console.log('Example app listening on port 3001!');
+// })
+
+module.exports = app;
