@@ -23,6 +23,11 @@ app.use(
   })
 )
 
+app.use((req, res, next) => {
+  res.append('Access-Control-Allow-Origin', ['*']);
+  next();
+});
+
 // render the main.hbs layout and the index.hbs file
 app.get('/', (req, res) => {
   res.render('index');
@@ -45,8 +50,8 @@ app.post('/validate', (req,res) => {
   })
 })
 
-// app.listen(3001, () => {
-//   console.log('Example app listening on port 3001!');
-// })
+app.listen(3001, () => {
+  console.log('Example app listening on port 3001!');
+})
 
 module.exports = app;
