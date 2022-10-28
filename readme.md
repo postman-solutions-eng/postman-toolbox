@@ -20,13 +20,15 @@ Currently the spectral parser only supports two functions: `pattern` and `truthy
 #### JSON Support
 The JSON support is limited to fully quoted JSON e.g.
 
+This works correctly.
 ```json
-# This works
 {
   "status": "OK"
 }
+```
 
-# This doesn't
+This doesn't work correctly.
+```json
 {
   status: "OK"
 }
