@@ -1,0 +1,124 @@
+openapi: '3.0.0'
+info:
+  version: '1.0.0'
+  title: 'Governance Rules Playground'
+  description: Validate your API definition against a set of Spectral Rules.
+servers:
+- url: https://governance-rules-playground.postmansolutions.com/
+  description: Production service.
+paths:
+  /validate:
+    post:
+      summary: Validate an API spec against a set of Spectral Rules.
+      requestBody:
+        description: The body of the request containing your documents.
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Validation'
+      responses:
+        '200':
+          description: Validation succeeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        
+        '500':
+          description: Error validating the submission 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: number
+                    format: int32
+                    example: 500
+                  message:
+                    type: string
+                    example: "An error occurred validating the spectral rules."
+                
+components:
+  schemas:
+    Validation:
+      description: The data being validated by the service.
+      type: object
+      required:
+        - spectralRule
+        - openApiSpec
+      properties:
+        spectralRule:
+          type: string
+        openApiSpec:
+          type: string
+    ValidationResult:
+      description: The validation result returned from the service.
+      type: object
+      properties:
+        jsonPathMatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/JSONPathMatch'
+        spectralResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpectralValidationResult'
+    JSONPathMatch:
+      description: A JSON Path match that is returned in the validation.
+      type: object
+      properties:
+        jsonPath:
+          type: string
+          example: "$.paths[*]~"
+          description: The matched JSON Path query.
+        matches:
+          type: array
+          items:
+            type: string
+            example:  "/pet/findByStatus"
+    SpectralValidationResult:
+      description: A Spectral Validation Result that is returned in the validation.
+      type: object
+      properties:
+        code:
+          type: string
+          description: The name of the spectral rule that has had a validation error.
+          example: "paths-kebab-case"
+        message:
+          type: string
+          description: The reason why the spectral rule has failed.
+          example: "should be kebab-case (lower-case and separated with hyphens)"
+        path:
+          type: array
+          description: The path that has caused the spectral rule to fail.
+          items:
+            type: string
+            example: "/pet/findByStatus"
+        severity:
+          type: number
+          format: int32
+          description: The severity of the spectral rule failure.
+          example: 1
+        range:
+          type: object
+          description: The location within the API spec that the failure can be located.
+          properties:
+            start:
+              $ref: '#/components/schemas/Range'
+            end:
+              $ref: '#/components/schemas/Range'
+    Range:
+      type: object
+      properties:
+        line:
+          type: number
+          format: int32
+          description: The line number of the spectral failure.
+          example: 6
+        character:
+          type: number
+          format: int32
+          description: The character number of the spectral failure.
+          example: 17
