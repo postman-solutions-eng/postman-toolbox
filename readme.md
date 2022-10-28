@@ -28,7 +28,7 @@ This works correctly.
 ```
 
 This doesn't work correctly.
-```json
+```
 {
   status: "OK"
 }
