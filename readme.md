@@ -1,20 +1,39 @@
 
-## Governance Rules Test Harness
+## Governance Rules Playground
 
 Two goals to this project.
-1. Identify which part of an OpenAPI spec will be targeted by a spectral rule (using JSON Schema.)
-2. Validate the rule to determine a pass/fail.
+1. Identify which part of an API spec will be targeted by a spectral rule (using JSON Path Plus.)
+2. Verify the rule against the API Spec to determine a pass/fail.
 
 ### Getting Started
 The tool is available at https://governance-rules-test-harness.postmansolutions.com/
 
-Enter your Spectral rule in YAML format, and an associated OpenAPI spec that you want to validate against and click the 'Validate' button.
+Enter your Spectral rule in YAML (or quoted JSON) format, and an associated OpenAPI spec that you want to validate against and click the 'Validate' button.
 
-The JSON schema that is identified by the `given` clause will be presented to you, along with the results of the spectral valiation.
+The JSON Path that is identified by the `given` clause will be presented to you, along with the results of the spectral valiation.
 
 ### Known limitations
 
-Currently the spectral parser only supports two functions; `pattern` and `truthy`.  If more are needed please raise an issue on the repo.
+#### Spectral Function Support
+Currently the spectral parser only supports two functions: `pattern` and `truthy`.  If more are needed please raise an issue on the repo.
+
+#### JSON Support
+The JSON support is limited to fully quoted JSON e.g.
+
+```json
+# This works
+{
+  "status": "OK"
+}
+
+# This doesn't
+{
+  status: "OK"
+}
+```
+
+#### Multiple JSON Path Support
+The `given` block of a Spectral Rule can support more than one JSON Path expression.  Currently this tool will only work with a single JSON Path expression.
 
 ### License
 

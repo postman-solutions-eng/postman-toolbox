@@ -1,7 +1,7 @@
 {
-  "name": "governance-rules-test-harness",
+  "name": "governance-rules-playground",
   "version": "0.0.1",
-  "description": "Test harness to check spectral rules against an OpenAPI spec.",
+  "description": "Playground to check spectral rules against an OpenAPI spec.",
   "main": "app.js",
   "scripts": {
     "test": "mocha"

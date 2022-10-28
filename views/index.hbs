@@ -1,7 +1,33 @@
 <div class="row">
-  <div class="col-5 px-5">
-    <h2>Spectral Rules (only YAML supported.)</h2>
-    <pre id="spectralRule">
+  <div class="col-3 mt-3 info">
+    <div class="text-center">
+      <h2>Governance Rules Playground</h2>
+    </div>
+    <div class="text-left">
+      <p>Use this tool to validate your API spec (OAS/AsyncAPI) against a series of Spectral rules.</p>
+      <p>Validation will return the elements in the API spec that are being validated (using JSONPath Plus) as well as
+        the result of the Spectral validation.</p>
+      <h4>What is Spectral?</h4>
+      <p><a href="https://github.com/stoplightio/spectral" target="_blank">Spectral</a> is a flexible linter for
+        JSON/YAML that comes with out of the box support for OpenAPI 2/3 and Async API.</p>
+      <h4>What is JSON Path?</h4>
+      <p><a href="https://jsonpath-plus.github.io/JSONPath/docs/ts/" target="_blank">JSONPath</a> is a query language
+        for JSON similar to XPath for XML. JSON Path allows you to search through JSON documents for elements that are
+        then evaluated against the Spectral rulesets.</p>
+      <h4>Bugs/Issues/Feedback</h4>
+      <p>The source code for this project is available on <a
+          href="https://github.com/postman-solutions-eng/governance-rules-test-harness" target="_blank">Github</a>.
+        Please raise an issue there or feel free to submit a PR.</p>
+      <h4>Privacy</h4>
+      <p>Data submitted to this service for validation purposes is not stored or tracked. That said, please don't go
+        submitting sensitive information online.</p>
+    </div>
+  </div>
+  <div class="col-9">
+    <div class="row">
+      <div class="col-6 mt-3">
+        <p><strong>Spectral Rule</strong></p>
+        <pre id="spectralRule">
 rules:
   paths-kebab-case:
     description: Paths should be kebab-case.
@@ -13,27 +39,18 @@ rules:
       functionOptions:
         match: "^(\/|[a-z0-9-.]+|{[a-zA-Z0-9_]+})+$"
   </pre>
-  </div>
-  <div class="col-1"></div>
-  <div class="col-5">
-    <h2>JSON Path Match Result</h2>
-    <pre><code class="language-json" id="jsonPathResult">Enter a Spectral Rule and an OpenAPI spec and then click validate.</code></pre>
-  </div>
-</div>
+      </div>
+      <div class="col-6 mt-3">
+        <p><strong>JSON Path Results</strong></p>
+        <pre><code class="language-json" id="jsonPathResult">Enter a Spectral Rule and an API spec and then click validate.</code></pre>
 
-<div class="row">
-  <div class="col-5"></div>
-  <div class="col-1">
-    <button class="btn btn-primary" onclick="validate();">Validate</button>
-  </div>
-  <div class="col-5"></div>
-</div>
+      </div>
+    </div>
 
-
-<div class="row">
-  <div class="col-5 px-5">
-    <h2>OpenAPI Spec (only YAML supported.)</h2>
-    <pre id="openApiSpec">
+    <div class="row">
+      <div class="col-6">
+        <p><strong>API Spec</strong></p>
+        <pre id="openApiSpec">
 openapi: 3.0.2
 info:
   title: Swagger Petstore - OpenAPI 3.0
@@ -834,12 +851,24 @@ components:
       type: apiKey
       name: api_key
       in: header
-
     </pre>
+        <div class="text-center">
+          <button class="btn btn-primary" onclick="validate();">Validate</button>
+        </div>
+      </div>
+      <div class="col-6">
+        <p><strong>Spectral Validation Results</strong></p>
+        <pre><code class="language-json" id="spectralResult">Enter a Spectral Rule and an API spec and then click validate.</code></pre>
+      </div>
+
+    </div>
+
   </div>
-  <div class="col-1"></div>
-  <div class="col-5">
-    <h2>Spectral Validation Result</h2>
-    <pre><code class="language-js" id="spectralResult">Enter a Spectral Rule and an OpenAPI spec and then click validate.</code></pre>
+</div>
+<div class="row">
+  <div class="col-5"></div>
+  <div class="col-1 text-center">
+
   </div>
+  <div class="col-5"></div>
 </div>

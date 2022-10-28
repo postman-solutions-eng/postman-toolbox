@@ -1,9 +1,24 @@
+body {
+  background-color: black;
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+p {
+  margin-bottom: 2px;
+}
+
 pre {
   max-height: 400px;
   overflow: scroll;
 }
 
-#spectralRule, #openApiSpec {
+pre[class*='language-'] {
+  margin-top: 2px;
+}
+
+#spectralRule,
+#openApiSpec {
   width: 36vw;
   height: 400px;
   position: relative;
@@ -12,5 +27,22 @@ pre {
   bottom: 0;
   left: 0;
   font-size: 1.1em;
-} 
+}
 
+.info p {
+  margin-top: 10px;
+  font-size: 1.2em;
+}
+
+.info h1,
+h2,
+h3,
+h4 {
+  color: rgb(210, 210, 104);
+}
+
+.info,
+h3,
+h4 {
+  margin-top: 15px;
+}
