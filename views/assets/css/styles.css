@@ -8,6 +8,10 @@ p {
   margin-bottom: 2px;
 }
 
+button {
+  margin-bottom: 20px;
+}
+
 pre {
   max-height: 400px;
   overflow: scroll;
@@ -31,7 +35,7 @@ pre[class*='language-'] {
 
 .info p {
   margin-top: 10px;
-  font-size: 1.2em;
+  font-size: 1em;
 }
 
 .info h1,
