@@ -44,9 +44,6 @@ This doesn't work correctly.
 }
 ```
 
-#### Multiple JSON Path Support
-The `given` block of a Spectral Rule can support more than one JSON Path expression.  Currently this tool will only work with a single JSON Path expression.
-
 ### License
 
 Copyright 2022 - Jordan Walsh
