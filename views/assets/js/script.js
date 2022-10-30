@@ -29,6 +29,9 @@ async function validate () {
   })
     .then(response => response.json())
     .then(data => {
+      if(data.error && data.error == 500) {
+        throw data.message;
+      }
       document.getElementById("jsonPathResult").innerHTML = JSON.stringify(data.jsonPathMatches, null, 2);
 
       if(!data.spectralResults || data.spectralResults.length == 0) {
@@ -42,6 +45,10 @@ async function validate () {
         document.getElementById("spectralResult").innerHTML = `${data.spectralResults.length}${message}` + JSON.stringify(data.spectralResults, null, 2);
       }
 
+    })
+    .catch(message => {
+      document.getElementById("jsonPathResult").innerHTML = message;
+      document.getElementById("spectralResult").innerHTML = message;
     })
 }
 

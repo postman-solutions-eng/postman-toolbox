@@ -2,33 +2,76 @@
 const validate = require('../lib/spectral').validate
 const fs = require('fs')
 const assert = require('chai').assert
+const expect = require('chai').expect
 
 describe('test suite', async () => {
-  describe('validation tests', async () => {
+  describe('Validation tests', async () => {
     let ruleset, openapi
 
     before(() => {
-      ruleset = fs.readFileSync(`${__dirname}/ruleset.yaml`)
-      openapi = fs.readFileSync(`${__dirname}/openapi.yaml`)
+      ruleset = fs.readFileSync(`${__dirname}/resources/valid/ruleset.yaml`)
+      openapi = fs.readFileSync(`${__dirname}/resources/valid/openapi.yaml`)
     })
 
-    it('Validates PetStore API', done => {
-      validate(ruleset, openapi)
+    it('Passes a valid spectral ruleset to the validation function.', () => {
+      return validate(ruleset, openapi)
         .then(results => {
-          let spectralResults = results.spectralResults;
-          assert(spectralResults.length > 0, 'Results is empty.')
+          let spectralResults = results.spectralResults
+          expect(spectralResults.length).to.be.greaterThan(0);
           spectralResults.forEach(result => {
-            assert(result.code == 'paths-kebab-case', 'Code is not correct.')
-            assert(
-              typeof result.severity == 'number',
-              'Severity is not a number'
-            )
+            expect(result.code).to.equal('paths-kebab-case')
+            expect(typeof result.severity).to.equal('number')
           })
-          done()
         })
         .catch(err => {
-          console.log(err)
-          done(err)
+          assert.fail('was not supposed to succeed: ' + err.toString());
+        })
+    })
+  })
+
+  describe('Invalid tests', async () => {
+    let invalidRuleset, invalidApiSpec
+    let validRuleset, validApiSpec
+
+    before(() => {
+      invalidRuleset = fs.readFileSync(`${__dirname}/resources/invalid/ruleset.yaml`)
+      invalidApiSpec = fs.readFileSync(`${__dirname}/resources/invalid/garbage.yaml`)
+      validRuleset = fs.readFileSync(`${__dirname}/resources/valid/ruleset.yaml`)
+      validApiSpec = fs.readFileSync(`${__dirname}/resources/valid/openapi.yaml`)
+    })
+
+    it('Passes an empty spectral ruleset to the validation function.', () => {
+      return validate("", validApiSpec).then(() => {
+        assert.fail('was not supposed to succeed');
+      }).catch(error => {
+        expect(error.toString()).to.equal("Error: Ruleset and API spec are required for validation.")
+      })
+      
+    })
+
+    it('Passes an empty api document to the validation function.', () => {
+      return validate(validRuleset, "").then(() => {
+        assert.fail('was not supposed to succeed');
+      }).catch(error => {
+        expect(error.toString()).to.equal("Error: Ruleset and API spec are required for validation.")
+      })
+    })
+
+    it('Passes an empty ruleset and empty api document to the validation function.', () => {
+      return validate("", "").then(() => {
+        assert.fail('was not supposed to succeed');
+      }).catch(error => {
+        expect(error.toString()).to.equal("Error: Ruleset and API spec are required for validation.")
+      })
+    })
+    
+    it('Passes an invalid spectral ruleset to the validation function.', () => {
+      return validate(invalidRuleset, validApiSpec)
+        .then(() => {
+          assert.fail('was not supposed to succeed');
+        })
+        .catch(err => {
+          expect(err.toString()).to.equal('Error: Invalid Spectral rule supplied. Please check your syntax and try again.')
         })
     })
   })
