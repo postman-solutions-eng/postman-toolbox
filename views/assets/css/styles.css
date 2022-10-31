@@ -21,6 +21,15 @@ pre[class*='language-'] {
   margin-top: 2px;
 }
 
+.copy {
+  position: relative;
+  float: right;
+  background-color: gray;
+  padding: 2px 5px;
+  cursor: pointer;
+  display: none;
+}
+
 #spectralRule,
 #openApiSpec {
   width: 36vw;
