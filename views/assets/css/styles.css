@@ -4,10 +4,6 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-[contenteditable]:focus {
-  outline: 0px solid transparent;
-}
-
 p {
   margin-bottom: 2px;
 }
