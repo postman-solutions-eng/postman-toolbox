@@ -73,11 +73,13 @@ async function validate () {
 var spectralRuleEditor = ace.edit("spectralRule");
 spectralRuleEditor.setTheme("ace/theme/twilight");
 spectralRuleEditor.session.setMode("ace/mode/yaml");
+spectralRuleEditor.session.setTabSize(2);
 spectralRuleEditor.session.setUseSoftTabs(true);
 
 var openApiSpecEditor = ace.edit("openApiSpec");
 openApiSpecEditor.setTheme("ace/theme/twilight");
 openApiSpecEditor.session.setMode("ace/mode/yaml");
+openApiSpecEditor.session.setTabSize(2);
 openApiSpecEditor.session.setUseSoftTabs(true);
 
 //Attach a listener to the copy buttons
