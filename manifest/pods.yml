@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: governance-rules-playground
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: governance-rules-playground
+  template:
+    metadata:
+      labels:
+        app: governance-rules-playground
+    spec:
+      containers:
+        - name: governance-rules-playground
+          image: 005904641462.dkr.ecr.us-east-2.amazonaws.com/governance-rules-playground:latest
+          ports:
+            - containerPort: 3001
