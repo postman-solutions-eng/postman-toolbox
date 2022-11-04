@@ -1,0 +1,27 @@
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-2:005904641462:certificate/9e5d08a4-6904-4c82-85f7-5d45284ab27c
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80, "HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+  name: governance-rules-playground-ingress
+spec:
+  rules:
+    - host: governance-rules-playground.postmansolutions.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: governance-rules-playground
+                port:
+                  number: 80
+            pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - governance-rules-playground.postmansolutions.com
