@@ -1,6 +1,5 @@
 const express = require('express');
 const exphbs = require('express-handlebars');
-const qs = require('qs')
 const validate = require('./lib/spectral').validate;
 
 let app = express();
@@ -39,9 +38,11 @@ app.post('/validate', (req,res) => {
 
   return validate(spectralRule, openApiSpec)
   .then(result => {
+    console.log(new Date(), "Validation Status: 200");
     res.status(200).json(result)
   })
   .catch(err => {
+    console.log(new Date(), "Validation Status: 500");
     res.status(500).json({
       error: 500,
       message: err.toString()
@@ -50,7 +51,7 @@ app.post('/validate', (req,res) => {
 })
 
 app.listen(3001, () => {
-  console.log('Example app listening on port 3001!');
+  console.log('Governance Rules Playground listening on port 3001!');
 })
 
 module.exports = app;
