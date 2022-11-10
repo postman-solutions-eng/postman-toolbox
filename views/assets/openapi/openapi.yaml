@@ -4,7 +4,7 @@ info:
   title: 'Governance Rules Playground'
   description: Validate your API definition against a set of Spectral Rules.
 servers:
-- url: https://governance-rules-playground.postmansolutions.com/
+- url: https://governance-rules-playground.postmansolutions.com
   description: Production service.
 paths:
   /validate:
