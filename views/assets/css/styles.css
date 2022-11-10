@@ -22,8 +22,8 @@ pre[class*='language-'] {
 }
 
 .copy {
-  position: relative;
-  float: right;
+  position: absolute;
+  right: 40px;
   background-color: gray;
   padding: 2px 5px;
   cursor: pointer;
