@@ -71,7 +71,7 @@ describe('test suite', async () => {
           assert.fail('was not supposed to succeed');
         })
         .catch(err => {
-          expect(err.toString()).to.equal('Error: Invalid Spectral rule supplied. Please check your syntax and try again.')
+          expect(err.toString()).to.contain('Error: Invalid Spectral rule supplied.')
         })
     })
   })
