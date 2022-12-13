@@ -9,10 +9,10 @@
   "author": "Jordan Walsh (jordan.walsh@postman.com)",
   "license": "MIT",
   "dependencies": {
-    "@stoplight/spectral-core": "^1.15.1",
+    "@stoplight/spectral-core": "^1.16.0",
     "@stoplight/spectral-functions": "^1.7.1",
     "@stoplight/spectral-parsers": "^1.0.2",
-    "@stoplight/spectral-ruleset-bundler": "^1.4.0",
+    "@stoplight/spectral-ruleset-bundler": "^1.5.0",
     "@stoplight/spectral-runtime": "^1.1.2",
     "express": "^4.18.2",
     "express-handlebars": "^6.0.6",
