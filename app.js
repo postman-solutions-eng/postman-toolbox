@@ -18,6 +18,7 @@ app.set('view engine', 'hbs');
 
 app.use(
   express.urlencoded({
+    limit: '50mb',
     extended: true
   })
 )
