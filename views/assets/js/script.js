@@ -5,18 +5,19 @@
  */
 
 async function validate () {
-  //Hide copy buttons
-  document.getElementById('jsonSchemaCopy').style.display = 'none'
-  document.getElementById('spectralResultCopy').style.display = 'none'
 
-  document.getElementById('jsonPathResult').innerHTML = 'Validating...'
-  document.getElementById('spectralResult').innerHTML = 'Validating...'
-
+  //hide any errors
+  document.getElementById('spectralResultsError').style.display = "none";
+  document.getElementById('spectralResultsTableBody').innerHTML = "";
+  document.getElementById('spectralResultsTable').style.display = "table";
+  
   let spectralRule = editors[0].getValue()
-  let openApiSpec = editors[1].getValue()
+  let spectralCustomFunctions = editors[1].getValue()
+  let openApiSpec = editors[2].getValue()
 
   let formBody = [
     `spectralRule=${encodeURIComponent(spectralRule)}`,
+    `spectralCustomFunctions=${encodeURIComponent(spectralCustomFunctions)}`,
     `openApiSpec=${encodeURIComponent(openApiSpec)}`
   ]
 
@@ -35,52 +36,103 @@ async function validate () {
         throw data.message
       }
 
-      document.getElementById('jsonPathResult').innerHTML = JSON.stringify(
-        data.jsonPathMatches,
-        null,
-        2
-      )
+      document.getElementById("jsonPathTableResultsBody").innerHTML = "";
+
+      for(let jsonPathMatch of data.jsonPathMatches) {
+        let tr = document.createElement("tr");
+        
+        let pathTd = document.createElement("td")
+        pathTd.innerText = jsonPathMatch.path;
+
+        let matchesTd = document.createElement("td")
+        matchesTd.innerText = jsonPathMatch.matches.join('\r\n');
+
+        tr.appendChild(pathTd);
+        tr.appendChild(matchesTd);
+
+        document.getElementById("jsonPathTableResultsBody").appendChild(tr);
+      }
 
       if (!data.spectralResults || data.spectralResults.length == 0) {
-        document.getElementById('spectralResult').innerHTML = 'No issues found!'
-        document.getElementById('jsonSchemaCopy').style.display = 'block'
+        document.getElementById('spectralResultsError').innerHTML = 'No issues found!'
+        document.getElementById('spectralResultsError').style.display = "block";
+        document.getElementById('spectralResultsTable').style.display = "none";
       } else {
-        //Show copy buttons
-        document.getElementById('jsonSchemaCopy').style.display = 'block'
-        document.getElementById('spectralResultCopy').style.display = 'block'
-
         let message = `${data.spectralResults.length} issue found`
         if (data.spectralResults.length > 1) {
           message = `${data.spectralResults.length} issues found`
         }
 
-        let results = {
-          summary: message,
-          results: data.spectralResults
-        }
+        document.getElementById("spectralResultsTableBody").innerHTML = "";
 
-        //document.getElementById("spectralResult").parentNode.innerText = `${message}`;
-        document.getElementById('spectralResult').innerHTML = JSON.stringify(
-          results,
-          null,
-          2
-        )
+        for(let spectralResult of data.spectralResults) {
+          let tr = document.createElement("tr");
+          
+          let codeTd = document.createElement("td")
+          codeTd.innerText = spectralResult.code;
+
+          let messageTd = document.createElement("td")
+          messageTd.innerText = spectralResult.message;
+
+          let pathTd = document.createElement("td")
+          pathTd.innerText = spectralResult.path.join('\r\n');
+
+          let severityTd = document.createElement("td")
+          switch(spectralResult.severity) {
+            case 0:
+              severityTd.innerText = "error";
+              break;
+            case 1: 
+              severityTd.innerText = "warn";
+              break;
+            case 2: 
+              severityTd.innerText = "info";
+              break;
+            case 3: 
+              severityTd.innerText = "hint";
+              break;  
+            default: 
+              severityTd.innerText = "n/a";
+              break;
+          }
+
+          let rangeTd = document.createElement("td")
+          rangeTd.innerHTML = `${parseInt(spectralResult.range.start.line)+1}`
+          
+          //add nodes to table
+          tr.appendChild(codeTd);
+          tr.appendChild(messageTd);
+          tr.appendChild(pathTd);
+          tr.appendChild(severityTd);
+          tr.appendChild(rangeTd);
+
+          document.getElementById("spectralResultsTableBody").appendChild(tr);
+        }
       }
     })
     .catch(message => {
-      document.getElementById('jsonPathResult').innerHTML = message
-      document.getElementById('spectralResult').innerHTML = message
+      document.getElementById("jsonPathTableResultsBody").innerHTML = "";
+      document.getElementById("spectralResultsTableBody").innerHTML = "";
+      document.getElementById('spectralResultsError').innerText = message;
+
+      //show the error
+      document.getElementById('spectralResultsTable').style.display = "none";
+      document.getElementById('spectralResultsError').style.display = "block";
     })
 }
 
-let editorNames = ['spectralRule', 'openApiSpec']
+let editorNames = [
+  { name: 'spectralRule', type: 'ace/mode/yaml' },
+  { name: 'spectralCustomFunctions', type: 'ace/mode/javascript' },
+  { name: 'openApiSpec', type: 'ace/mode/yaml' }
+]
 let editors = []
 
 for (let editor of editorNames) {
-  ace.require("ace/ext/language_tools");
-  var thisEditor = ace.edit(editor)
-  thisEditor.setTheme('ace/theme/twilight')
-  thisEditor.session.setMode('ace/mode/yaml')
+  ace.require('ace/ext/language_tools')
+  var thisEditor = ace.edit(editor.name)
+  thisEditor.setTheme('ace/theme/monokai')
+  thisEditor.session.setMode(editor.type)
   thisEditor.session.setTabSize(2)
   thisEditor.session.setUseSoftTabs(true)
   thisEditor.setOptions({
@@ -89,18 +141,4 @@ for (let editor of editorNames) {
     enableLiveAutocompletion: false
   })
   editors.push(thisEditor)
-}
-
-//Attach a listener to the copy buttons
-for (let element of document.getElementsByClassName('copy')) {
-  element.addEventListener('click', function (evt) {
-    // Copy the text inside the text field
-    navigator.clipboard.writeText(evt.target.nextSibling.innerText)
-
-    evt.target.innerText = 'Copied'
-
-    setTimeout(() => {
-      evt.target.innerText = 'Copy'
-    }, 3000)
-  })
 }
