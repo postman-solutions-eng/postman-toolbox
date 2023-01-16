@@ -4,6 +4,10 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+h5 {
+  margin-top: 20px;
+}
+
 p {
   margin-bottom: 2px;
 }
@@ -31,15 +35,16 @@ pre[class*='language-'] {
 }
 
 #spectralRule,
-#openApiSpec {
-  width: 36vw;
+#openApiSpec,
+#spectralCustomFunctions {
+  width: 32vw;
   height: 400px;
   position: relative;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
-  font-size: 1.1em;
+  font-size: 1em;
 }
 
 .info p {
@@ -47,15 +52,53 @@ pre[class*='language-'] {
   font-size: 1em;
 }
 
-.info h1,
-h2,
-h3,
-h4 {
-  color: rgb(210, 210, 104);
-}
-
 .info,
 h3,
 h4 {
   margin-top: 15px;
+}
+
+.infolink:before {
+  content: '?';
+  display: inline-block;
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: center;
+  width: 3ex;
+  height: 3ex;
+  font-size: 2.5ex;
+  line-height: 2.7ex;
+  border-radius: 3ex;
+  margin-right: 4px;
+  padding: 1px;
+  color: white;
+  background: grey;
+  border: 1px solid grey;
+  text-decoration: none;
+}
+
+.infolink:hover:before {
+  color: white;
+  background: grey;
+  border-color: white;
+  text-decoration: none;
+}
+
+.modal {
+  color: black;
+}
+
+.resultTable {
+  background-color: darkslategray;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
+  vertical-align: middle;
+}
+
+#spectralResultsError {
+  display: none;
+  padding: 20px;
+  background-color: darkslategray;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
 }

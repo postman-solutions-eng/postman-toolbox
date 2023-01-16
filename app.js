@@ -1,6 +1,8 @@
 const express = require('express');
 const exphbs = require('express-handlebars');
+const fs = require('fs');
 const validate = require('./lib/spectral').validate;
+const writeFunctions = require('./lib/spectral').writeFunctions;
 
 let app = express();
 let hbs = exphbs.create({
@@ -36,9 +38,20 @@ app.get('/', (req, res) => {
 app.post('/validate', (req,res) => {
   let spectralRule = req.body.spectralRule;
   let openApiSpec = req.body.openApiSpec;
+  let customFunctions = req.body.spectralCustomFunctions;
 
-  return validate(spectralRule, openApiSpec)
+  let filesToDelete = [];
+  
+
+  return writeFunctions(customFunctions)
+  .then((fileNames) => {
+    filesToDelete = fileNames;
+    return validate(spectralRule, openApiSpec)
+  })
   .then(result => {
+    for(let file of filesToDelete) {
+      fs.unlinkSync(file);
+    }
     console.log(new Date(), "Validation Status: 200");
     res.status(200).json(result)
   })
