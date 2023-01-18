@@ -31,6 +31,14 @@ app.use((req, res, next) => {
 });
 
 // render the main.hbs layout and the index.hbs file
+app.get('/healthcheck', (req, res) => {
+  res.json({
+    "status": "running",
+    "date": new Date()
+  });
+});
+
+// render the main.hbs layout and the index.hbs file
 app.get('/', (req, res) => {
   res.render('index');
 });

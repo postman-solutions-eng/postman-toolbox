@@ -15,5 +15,11 @@ spec:
       containers:
         - name: governance-rules-playground
           image: 005904641462.dkr.ecr.us-east-2.amazonaws.com/governance-rules-playground:latest
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 5
           ports:
             - containerPort: 3001
