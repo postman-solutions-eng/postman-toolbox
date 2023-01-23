@@ -21,6 +21,10 @@ pre {
   overflow: scroll;
 }
 
+pre.small {
+  max-width: 400px;
+}
+
 pre[class*='language-'] {
   margin-top: 2px;
 }

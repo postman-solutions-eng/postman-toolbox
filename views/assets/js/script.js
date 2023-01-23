@@ -45,8 +45,15 @@ async function validate () {
         pathTd.innerText = jsonPathMatch.path;
 
         let matchesTd = document.createElement("td")
-        matchesTd.innerText = jsonPathMatch.matches.join('\r\n');
+        let pre = document.createElement("pre");
+        pre.classList.add("small")
 
+        if(jsonPathMatch.matches.length > 0 && typeof jsonPathMatch.matches[0] == 'string') {
+          pre.innerText = jsonPathMatch.matches.join('\r\n');
+        } else {
+          pre.innerText = JSON.stringify(jsonPathMatch.matches, null, 2);
+        }
+        matchesTd.appendChild(pre);
         tr.appendChild(pathTd);
         tr.appendChild(matchesTd);
 
@@ -75,6 +82,7 @@ async function validate () {
           messageTd.innerText = spectralResult.message;
 
           let pathTd = document.createElement("td")
+          
           pathTd.innerText = spectralResult.path.join('\r\n');
 
           let severityTd = document.createElement("td")
