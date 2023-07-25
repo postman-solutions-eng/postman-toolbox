@@ -4,6 +4,7 @@ const fs = require('fs')
 const assert = require('chai').assert
 const expect = require('chai').expect
 
+
 describe('test suite', async () => {
   describe('Validation tests', async () => {
     let ruleset, openapi
