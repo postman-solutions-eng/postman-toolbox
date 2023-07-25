@@ -1,0 +1,10 @@
+functions: [hello]
+rules:
+  paths-kebab-case:
+    description: Paths should be kebab-case.
+    message: "{{error}}"
+    severity: warn
+    given: $.paths[*]~
+    then:
+      - function: hello
+  
