@@ -1,21 +1,11 @@
 <!-- Modal -->
-<div
-  class='modal modal-xl fade bg-dark'
-  id='infoModal'
-  tabindex='-1'
-  aria-labelledby='infoModalLabel'
-  aria-hidden='true'
->
+<div class='modal modal-xl fade bg-dark' id='infoModal' tabindex='-1' aria-labelledby='infoModalLabel'
+  aria-hidden='true'>
   <div class='modal-dialog'>
     <div class='modal-content'>
       <div class='modal-header'>
         <h1 class='modal-title fs-5' id='infoModalLabel'>About this tool</h1>
-        <button
-          type='button'
-          class='btn-close'
-          data-bs-dismiss='modal'
-          aria-label='Close'
-        ></button>
+        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
       </div>
       <div class='modal-body'>
         <div class='text-left'>
@@ -25,33 +15,25 @@
             validated (using JSONPath Plus) as well as the result of the
             Spectral validation.</p>
           <h5>What is Spectral?</h5>
-          <p><a
-              href='https://github.com/stoplightio/spectral'
-              target='_blank'
-            >Spectral</a>
+          <p><a href='https://github.com/stoplightio/spectral' target='_blank'>Spectral</a>
             is a flexible linter for JSON/YAML that comes with out of the box
             support for OpenAPI 2/3 and Async API.</p>
           <h5>What is JSON Path?</h5>
-          <p><a
-              href='https://jsonpath-plus.github.io/JSONPath/docs/ts/'
-              target='_blank'
-            >JSONPath</a>
+          <p><a href='https://jsonpath-plus.github.io/JSONPath/docs/ts/' target='_blank'>JSONPath</a>
             is a query language for JSON similar to XPath for XML. JSON Path
             allows you to search through JSON documents for elements that are
             then evaluated against the Spectral rulesets.</p>
           <h5>How to use this tool?</h5>
-          <p>A getting started guide is hosted on the 
-            <a
-              href='https://github.com/postman-solutions-eng/governance-rules-playground/wiki/1.-Getting-Started-Guide'
-              target='_blank'
-            >Github</a> wiki.</p>
+          <p>A getting started guide is hosted on the
+            <a href='https://github.com/postman-solutions-eng/governance-rules-playground/wiki/1.-Getting-Started-Guide'
+              target='_blank'>Github</a> wiki.
+          </p>
           <h5>Bugs/Issues/Feedback</h5>
           <p>The source code for this project is available on
-            <a
-              href='https://github.com/postman-solutions-eng/governance-rules-playground/issues'
-              target='_blank'
-            >Github</a>. Please raise an issue there or feel free to submit a
-            PR.</p>
+            <a href='https://github.com/postman-solutions-eng/governance-rules-playground/issues'
+              target='_blank'>Github</a>. Please raise an issue there or feel free to submit a
+            PR.
+          </p>
           <h5>Privacy</h5>
           <p>Data submitted to this service for validation purposes is not
             stored or tracked. That said, please don't go submitting sensitive
@@ -59,11 +41,42 @@
         </div>
       </div>
       <div class='modal-footer'>
-        <button
-          type='button'
-          class='btn btn-secondary'
-          data-bs-dismiss='modal'
-        >Close</button>
+        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- AI Modal -->
+<div class='modal modal-xl fade bg-dark' id='generateModal' tabindex='-1' aria-labelledby='generateModalLabel'
+  aria-hidden='true'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <h1 class='modal-title fs-5' id='generateModalLabel'>Generate a Spectral rule with AI</h1>
+        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+      </div>
+      <div class='modal-body'>
+        <form>
+          <div class="mb-3">
+            <label for="promptTextArea" class="form-label">Enter your prompt:</label>
+            <textarea class="form-control" id="promptTextArea"
+              placeholder="Enter your prompt: e.g. Validate that all query parameters are in snake case."></textarea>
+              <div class="invalid-feedback">
+                There was an error with your prompt.
+              </div>
+          </div>
+          <button type="button" onclick="generate()" class="btn btn-primary mb-3">Generate</button>
+          <div class="mb-3">
+            <label for="responseTextArea" class="form-label">Result:</label>
+            <textarea class="form-control" id="responseTextArea" rows="10"
+              readonly="readonly" disabled="disabled"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class='modal-footer'>
+        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
       </div>
     </div>
   </div>

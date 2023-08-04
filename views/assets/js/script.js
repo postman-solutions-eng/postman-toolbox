@@ -142,3 +142,38 @@ for (let editor of editorNames) {
   })
   editors.push(thisEditor)
 }
+
+async function generate() {
+  let textarea = document.getElementById("promptTextArea");
+  let valid = false;
+  
+  if(!textarea || !textarea.value) {
+    textarea.classList.add('is-invalid')
+  } else {
+    textarea.classList.remove('is-invalid')
+    valid = true;
+  }
+
+  if(valid) {
+
+    const response = await fetch('/generate', {
+      method: "POST", 
+      mode: "cors", 
+      cache: "no-cache", 
+      credentials: "same-origin", 
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt: textarea.value
+      })
+    });
+    
+    response.json()
+    .then(data => {
+      let codeblock = document.getElementById("responseTextArea");
+      codeblock.value = data.result.message.content;
+    })
+
+  }
+}

@@ -19,6 +19,7 @@
     "fs": "^0.0.1-security",
     "js-yaml": "^4.1.0",
     "jsonpath-plus": "^7.2.0",
+    "openai": "^3.3.0",
     "uuidv4": "^6.2.13"
   },
   "devDependencies": {
