@@ -92,7 +92,7 @@ app.post('/api/generate', express.json(), (req, res) => {
         }
       })
       .catch(err => {
-        console.log(err);
+        console.log(err.response ? err.response : "An error occurred and the err.response object was not available.");
         res.status(400).json({
           error: 'Error with prompt provided.'
         })

@@ -54,7 +54,7 @@
   <div class='modal-dialog'>
     <div class='modal-content'>
       <div class='modal-header'>
-        <h1 class='modal-title fs-5' id='generateModalLabel'>Generate a Spectral rule with AI</h1>
+        <h1 class='modal-title fs-5' id='generateModalLabel'>Generate a Spectral rule with AI - Experimental</h1>
         <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
       </div>
       <div class='modal-body'>
@@ -72,6 +72,7 @@
             <label for="responseTextArea" class="form-label">Result:</label>
             <textarea class="form-control" id="responseTextArea" rows="10"
               readonly="readonly" disabled="disabled"></textarea>
+              <p class="mt-2"><strong>Disclaimer:</strong><br/>The generated rules are not guaranteed to work. The AI engines are getting better, but there are a lot of invalid spectral rules that are affecting the quality of the rules that are generated. If your rule doesn't work, try changing the prompt slightly and it will generate a new rule that may provide better results.</p>
           </div>
         </form>
       </div>
