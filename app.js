@@ -3,6 +3,17 @@ const exphbs = require('express-handlebars')
 const fs = require('fs')
 const validate = require('./lib/spectral').validate
 const writeFunctions = require('./lib/spectral').writeFunctions
+const rateLimit = require('express-rate-limit')
+
+const apiLimiter = rateLimit({
+	windowMs: 1 * 60 * 1000, // 1 minute
+	max: 5, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+	message: async (request, response) => {
+		return 'You can only make 5 requests every minute.'
+	},
+})
 
 const { Configuration, OpenAIApi } = require('openai')
 const configuration = new Configuration({
@@ -19,6 +30,9 @@ let hbs = exphbs.create({
 
 //Set the static files directory
 app.use(express.static(`${__dirname}/views/assets`))
+
+// Apply the rate limiting middleware to API calls only
+app.use('/api', apiLimiter)
 
 //Set the view engine
 app.engine('hbs', hbs.engine)
@@ -41,11 +55,14 @@ app.get('/', (req, res) => {
   res.render('index')
 })
 
+app.set('trust proxy', 1)
+app.get('/ip', (request, response) => response.send(request.ip))
+
 // render the main.hbs layout and the index.hbs file
-app.post('/generate', express.json(), (req, res) => {
+app.post('/api/generate', express.json(), (req, res) => {
   let body = req.body
 
-  if (!body) {
+  if (!body || !body.prompt) {
     res.status(400).json({
       error: 'No prompt provided.'
     })
