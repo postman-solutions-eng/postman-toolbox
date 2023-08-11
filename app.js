@@ -11,6 +11,7 @@ const apiLimiter = rateLimit({
 	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 	message: async (request, response) => {
+    console.log(new Date(), 'AI RateLimit - User hit the rate limit.')
 		return 'You can only make 5 requests every minute.'
 	},
 })
@@ -83,7 +84,16 @@ app.post('/api/generate', express.json(), (req, res) => {
       })
       .then(aiResponse => {
         if(aiResponse && aiResponse.data && aiResponse.data.choices && aiResponse.data.choices.length > 0) {
-          console.log(new Date(), 'AI Success')
+
+          let unknownResponse = "Sorry I do not know the answer.";
+
+          if(aiResponse.data.choices[0].message.content == unknownResponse) {
+            console.log(new Date(), 'AI Unknown - AI returned the unknown response.')
+          } else {
+            console.log(new Date(), 'AI Success - Prompt worked as expected.')
+          }
+
+          
           //We have a choice for the response
           res.status(200).json({
             result: aiResponse.data.choices[0]
