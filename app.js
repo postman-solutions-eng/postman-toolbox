@@ -83,16 +83,18 @@ app.post('/api/generate', express.json(), (req, res) => {
       })
       .then(aiResponse => {
         if(aiResponse && aiResponse.data && aiResponse.data.choices && aiResponse.data.choices.length > 0) {
+          console.log(new Date(), 'AI Success')
           //We have a choice for the response
           res.status(200).json({
             result: aiResponse.data.choices[0]
           })
         } else {
+          console.log(new Date(), 'AI Error - No choices provided in the response.')
           throw "No choices provided in the response."
         }
       })
       .catch(err => {
-        console.log(err.response ? err.response : "An error occurred and the err.response object was not available.");
+        console.log(new Date(), 'AI Error - Generic Error thrown.')
         res.status(400).json({
           error: 'Error with prompt provided.'
         })
@@ -129,7 +131,7 @@ app.post('/validate', (req, res) => {
 })
 
 app.listen(3001, () => {
-  console.log('Governance Rules Playground listening on port 3001!')
+  console.log(new Date(), 'Governance Rules Playground listening on port 3001!')
 })
 
 module.exports = app
