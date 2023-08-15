@@ -10,11 +10,28 @@
 </head>
 
 <body class=''>
-
   <div class='container-fluid'>
-    {{> nav}}
-    {{> modals}}
-    {{{body}}}
+    <div class="row">
+      {{> nav}}
+    </div>
+    <div class="row">
+      <div class="col-1 border-end border-light mt-3">
+        <a href="/governancePlayground">
+          <button type="button" class="btn btn-light">
+            Governance Rules Playground
+          </button>
+        </a>
+        <a href="/testComposer">
+          <button type="button" class="btn btn-light">
+            Visual Test Composer
+          </button>
+        </a>
+      </div>
+      <div class="col-11">
+        {{> modals}}
+        {{{body}}}
+      </div>
+    </div>
   </div>
 
   <!-- JavaScript Bundle with Popper -->

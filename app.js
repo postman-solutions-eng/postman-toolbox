@@ -34,6 +34,12 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.render('index');
 });
+app.get('/governancePlayground', (req, res) => {
+  res.render('governancePlayground');
+});
+app.get('/testComposer', (req, res) => {
+  res.render('testComposer');
+});
 
 app.post('/validate', (req,res) => {
   let spectralRule = req.body.spectralRule;

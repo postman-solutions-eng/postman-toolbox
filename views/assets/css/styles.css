@@ -37,7 +37,6 @@ pre[class*='language-'] {
 #spectralRule,
 #openApiSpec,
 #spectralCustomFunctions {
-  width: 32vw;
   height: 400px;
   position: relative;
   top: 0;
