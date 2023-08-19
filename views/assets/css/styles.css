@@ -17,7 +17,7 @@ button {
 }
 
 pre {
-  max-height: 400px;
+  /*max-height: 400px;*/
   overflow: scroll;
 }
 
@@ -38,6 +38,17 @@ pre[class*='language-'] {
 #openApiSpec,
 #spectralCustomFunctions {
   height: 400px;
+  position: relative;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  font-size: 1em;
+}
+
+#testComposerJSONPayload,
+#testJS {
+  height: 800px;
   position: relative;
   top: 0;
   right: 0;
@@ -101,3 +112,5 @@ h4 {
   color: white;
   font-family: 'Courier New', Courier, monospace;
 }
+
+

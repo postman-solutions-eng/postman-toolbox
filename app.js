@@ -47,7 +47,7 @@ app.post('/validate', (req,res) => {
   let customFunctions = req.body.spectralCustomFunctions;
 
   let filesToDelete = [];
-  
+
 
   return writeFunctions(customFunctions)
   .then((fileNames) => {
