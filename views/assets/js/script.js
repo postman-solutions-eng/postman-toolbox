@@ -1,48 +1,8 @@
 /**
  * Script.js
- * Author: Jordan Walsh and Grey Schober
+ * Author: Jordan Walsh
  *
  */
-
-//////////////////////////////
-//  BEGIN SHARED JAVASCRIPT //
-//////////////////////////////
-let editorNames = [
-  { name: 'spectralRule', type: 'ace/mode/yaml' },
-  { name: 'spectralCustomFunctions', type: 'ace/mode/javascript' },
-  { name: 'openApiSpec', type: 'ace/mode/yaml' },
-  // { name: 'testComposerJSONPayload', type: 'ace/mode/json' },
-  // { name: 'testJS', type: 'ace/mode/javascript' }
-]
-let editors = []
-
-for (let editor of editorNames) {
-  ace.require('ace/ext/language_tools')
-  if (document.getElementById(editor.name)) {
-    var thisEditor = ace.edit(editor.name)
-    thisEditor.setTheme('ace/theme/monokai')
-    thisEditor.session.setMode(editor.type)
-    thisEditor.session.setTabSize(2)
-    thisEditor.session.setUseSoftTabs(true)
-    thisEditor.setOptions({
-      enableBasicAutocompletion: true,
-      enableSnippets: true,
-      enableLiveAutocompletion: false
-    })
-    // thisEditor.container.addEventListener('keydown', function() {console.log('2')})
-    editors.push(thisEditor)
-  }
-}
-
-//////////////////////////////
-//  END SHARED JAVASCRIPT   //
-//////////////////////////////
-
-
-
-/////////////////////////////////////////////
-// BEGIN GOVERNANCE PLAYGROUND JAVASCRIPT  //
-/////////////////////////////////////////////
 
 async function validate () {
 
@@ -159,4 +119,29 @@ async function validate () {
       document.getElementById('spectralResultsTable').style.display = "none";
       document.getElementById('spectralResultsError').style.display = "block";
     })
+}
+
+let editorNames = [
+  { name: 'spectralRule', type: 'ace/mode/yaml' },
+  { name: 'spectralCustomFunctions', type: 'ace/mode/javascript' },
+  { name: 'openApiSpec', type: 'ace/mode/yaml' }
+]
+let editors = []
+
+for (let editor of editorNames) {
+  ace.require('ace/ext/language_tools')
+  if (document.getElementById(editor.name)) {
+    var thisEditor = ace.edit(editor.name)
+    thisEditor.setTheme('ace/theme/monokai')
+    thisEditor.session.setMode(editor.type)
+    thisEditor.session.setTabSize(2)
+    thisEditor.session.setUseSoftTabs(true)
+    thisEditor.setOptions({
+      enableBasicAutocompletion: true,
+      enableSnippets: true,
+      enableLiveAutocompletion: false
+    })
+    // thisEditor.container.addEventListener('keydown', function() {console.log('2')})
+    editors.push(thisEditor)
+  }
 }
