@@ -130,18 +130,17 @@ let editors = []
 
 for (let editor of editorNames) {
   ace.require('ace/ext/language_tools')
-  if (document.getElementById(editor.name)) {
-    var thisEditor = ace.edit(editor.name)
-    thisEditor.setTheme('ace/theme/monokai')
-    thisEditor.session.setMode(editor.type)
-    thisEditor.session.setTabSize(2)
-    thisEditor.session.setUseSoftTabs(true)
-    thisEditor.setOptions({
-      enableBasicAutocompletion: true,
-      enableSnippets: true,
-      enableLiveAutocompletion: false
-    })
-    // thisEditor.container.addEventListener('keydown', function() {console.log('2')})
-    editors.push(thisEditor)
-  }
+  var thisEditor = ace.edit(editor.name)
+  thisEditor.setTheme('ace/theme/monokai')
+  thisEditor.session.setMode(editor.type)
+  thisEditor.session.setTabSize(2)
+  thisEditor.session.setUseSoftTabs(true)
+  thisEditor.setOptions({
+    enableBasicAutocompletion: true,
+    enableSnippets: true,
+    enableLiveAutocompletion: false
+  })
+  // thisEditor.container.addEventListener('keydown', function() {console.log('2')})
+  editors.push(thisEditor)
+
 }
