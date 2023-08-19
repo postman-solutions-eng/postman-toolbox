@@ -1,8 +1,48 @@
 /**
  * Script.js
- * Author: Jordan Walsh
+ * Author: Jordan Walsh and Grey Schober
  *
  */
+
+//////////////////////////////
+//  BEGIN SHARED JAVASCRIPT //
+//////////////////////////////
+let editorNames = [
+  { name: 'spectralRule', type: 'ace/mode/yaml' },
+  { name: 'spectralCustomFunctions', type: 'ace/mode/javascript' },
+  { name: 'openApiSpec', type: 'ace/mode/yaml' },
+  // { name: 'testComposerJSONPayload', type: 'ace/mode/json' },
+  // { name: 'testJS', type: 'ace/mode/javascript' }
+]
+let editors = []
+
+for (let editor of editorNames) {
+  ace.require('ace/ext/language_tools')
+  if (document.getElementById(editor.name)) {
+    var thisEditor = ace.edit(editor.name)
+    thisEditor.setTheme('ace/theme/monokai')
+    thisEditor.session.setMode(editor.type)
+    thisEditor.session.setTabSize(2)
+    thisEditor.session.setUseSoftTabs(true)
+    thisEditor.setOptions({
+      enableBasicAutocompletion: true,
+      enableSnippets: true,
+      enableLiveAutocompletion: false
+    })
+    // thisEditor.container.addEventListener('keydown', function() {console.log('2')})
+    editors.push(thisEditor)
+  }
+}
+
+//////////////////////////////
+//  END SHARED JAVASCRIPT   //
+//////////////////////////////
+
+
+
+/////////////////////////////////////////////
+// BEGIN GOVERNANCE PLAYGROUND JAVASCRIPT  //
+/////////////////////////////////////////////
 
 async function validate () {
 
@@ -121,74 +161,97 @@ async function validate () {
     })
 }
 
-//handlers for input on Test Composer
-let testFormData = [];
-function handleJSONInput() {
-  let json;
-  try {
-    //on testComposer page, editors[0] will be the JSON input window
-    json = JSON.parse(editors[0].getValue())
-    testFormData = recursiveMap(json)
-    console.log('testFormData.length1')
-    console.log(testFormData.length)
-    //load template
-    Handlebars.registerPartial('list', "                                                                        \
-      {{#each items}}                                                                                                     \
-        <div class='row'>                                                                                                 \
-          <div class='form-group col-sm-5\'>                                                                              \
-            <input type='text' class='form-control form-control-sm' id='propertyName' disabled='true' value={{propertyName}}> \
-          </div>                                                                                                          \
-          <div class=\"form-group col-sm-2\">                                                                             \
-            <select class=\"form-control-sm\" id=\"exampleFormControlSelect1\">                                           \
-              {{#if formValueFieldEnabled}}                                                                                           \
-              <option value = '.to.equal'>=</option>                                                                          \
-              <option value = '.to.be.above'>&gt;</option>                                                                       \
-              <option value = '.to.be.below'>&lt;</option>                                                                       \
-              {{else}}                                                                                                    \
-                <option value = '.to.exist'>Exists</option>                                                                   \
-                <option value = '.to.not.exist'>!Exists</option>                                                              \
-              {{/if}}                                                                                                     \
-            </select>                                                                                                     \
-          </div>                                                                                                          \
-          <div class=\"form-group col-sm-5\">                                                                             \
-            {{#if value}}                                                                                                 \
-            <input type=\"text\" class=\"form-control form-control-sm\" id=\"propertyValue\" value='{{value}}'>           \
-            {{else}}                                                                                                      \
-            <input type=\"text\" class=\"form-control form-control-sm\" id=\"propertyValue\" disabled=\"true\">           \
-            {{/if}}                                                                                                       \
-          </div>                                                                                                          \                                                                                                      \
-        </div>                                                                                                            \
-        {{#if items}}                                                                                                     \
-          {{> list}}                                                                                                      \
-        {{/if}}                                                                                                           \
-      {{/each}}                                                                                                           \
-    ")
-    let template = Handlebars.compile("<ul>{{> list}}</ul>")
+/////////////////////////////////////////////
+// END GOVERNANCE PLAYGROUND JAVASCRIPT    //
+/////////////////////////////////////////////
 
-    //render template
-    document.getElementById('rulecontainer').innerHTML = template({items: testFormData});
-  }
-  catch {
-    document.getElementById('rulecontainer').innerHTML = "Invalid JSON.   Please provide a valid JSON document";
-  }
-}
 
-// function recursiveMap(obj, path) {
-//   let result = []
+
+
+// ////////////////////////////////////
+// // BEGIN TEST COMPOSER JAVASCRIPT //
+// ////////////////////////////////////
+//
+// //data containers referenced across this entire component
+// let testFormData = [];
+//
+// //invoke initial call handleJSONInput to put meaningful data on the user's screen
+// handleJSONInput();
+//
+// // This function is the initial entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
+// // this function generates data structure upon which this entire page is reliant (testFormData array), generates the test
+// // composition form, registers event listeners upon the various fields within that form, and invokes the generation
+// // of the chai assertions.
+// function handleJSONInput() {
+//   //zero out testFormData field in case user uses this tool multiple times in a row
+//   testFormData = []
+//   let json;
+//   try {
+//     //on this page (testComposer page), editors[0] will be the JSON input window
+//     json = JSON.parse(editors[0].getValue())
+//     generateForm(json)
+//
+//     //load template
+//     let template = Handlebars.compile("<ul>{{> list}}</ul>")
+//
+//     //render template
+//     document.getElementById('ruleFormContainer').innerHTML = template({items: testFormData});
+//
+//     //register listeners for each input field
+//     _.forEach(testFormData, function(formEntry, index) {
+//
+//       let conditionSelect = document.getElementById('conditionSelect' + index)
+//       let propertyNameTextBox = document.getElementById('propertyName' + index)
+//
+//       conditionSelect.addEventListener('input', event => {
+//         testFormData[index].condition = conditionSelect.options[conditionSelect.selectedIndex].value;
+//         generateChaiAssertions()
+//       })
+//       propertyNameTextBox.addEventListener('input', event => {
+//         testFormData[index].value = propertyNameTextBox.value;
+//         generateChaiAssertions()
+//       })
+//     })
+//     //generate initial set of assertions
+//     generateChaiAssertions()
+//   }
+//   catch {
+//     document.getElementById('ruleFormContainer').innerHTML = "Invalid JSON.   Please provide a valid JSON document";
+//   }
+// }
+//
+// //recursive function that generates form entries based on the JSON payload provided by the user
+// function generateForm(obj, path) {
 //   if (!path) {path = ""}
 //   _.each(obj, function (value, key) {
-//     //note that due to Handlebars' comparatively primitive templating logic where one cannot easily do comparisons for the purposes
-//     //of displaying a template, I could not test for the value of the "type" property.  Consequently, I had to add a seemingly
-//     //superfluous field called 'formValueFieldEnabled' to give the templating logic something to test for
+//
+//     // object keys in json must ALWAYS be strings.  Consequently, if you see a numeric key, it means you are in an array
+//     // or have a key in the form of:
+//     // testObject: {
+//     //    "name": "Grey"
+//     //      "10": "the key for this value is 10"
+//     // }
+//     // In both cases, the appropriate way to index to this value is with bracket notation i.e. testObject[10]
+//     if (_.isNumber(key) && path !== "") {
+//       key = "[" + key + "]"
+//     }
+//     else if (path !== "") {
+//       key = "." + key
+//     }
+//
+//     //note that due to Handlebars' comparatively primitive templating logic, one cannot easily do comparisons for the purposes
+//     //of displaying a template.  AKA I can not test for the value of the "type" property without writing a hacky "helper function".
+//     // Consequently, I had to add a seemingly superfluous field called 'formValueFieldEnabled' to give the templating logic
+//     // something to test for to determine whether the value field should be enabled (or not) in the form
 //     if (_.isObject(value)) {
-//       testFormData.push({propertyName: path === "" ? key : path + "." + key, formValueFieldEnabled: false, condition: '.to.exist', type: 'object'});
-//       recursiveMap(value, path === "" ? key : path + "." + key)
+//       testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: false, condition: '.to.exist', type: 'object'});
+//       generateForm(value, path === "" ? key : path + key)
 //     } else {
 //       if (_.isNumber(value)) {
-//         testFormData.push({propertyName: path === "" ? key : path + "." + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'number', value: value});
+//         testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'number', value: value});
 //       }
 //       if (_.isString(value)) {
-//         testFormData.push({propertyName: path === "" ? key : path + "." + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', value: value});
+//         testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', value: value});
 //       }
 //       // if (_.isBoolean(value)) {
 //       // }
@@ -196,105 +259,83 @@ function handleJSONInput() {
 //       // }
 //     }
 //   });
-//   return result
 // }
-
-function recursiveMap(obj, path) {
-  let result = []
-  if (!path) {path = ""}
-  _.each(obj, function (value, key) {
-    //note that due to Handlebars' comparatively primitive templating logic where one cannot easily do comparisons for the purposes
-    //of displaying a template, I could not test for the value of the "type" property.  Consequently, I had to add a seemingly
-    //superfluous field called 'formValueFieldEnabled' to give the templating logic something to test for
-    if (_.isObject(value)) {
-      result.push({propertyName: path === "" ? key : path + "." + key, formValueFieldEnabled: false, condition: '.to.exist', type: 'object', items: recursiveMap(value, path === "" ? key : path + "." + key)});
-    } else {
-      if (_.isNumber(value)) {
-        result.push({propertyName: path === "" ? key : path + "." + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'number', value: value});
-      }
-      if (_.isString(value)) {
-        result.push({propertyName: path === "" ? key : path + "." + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', value: value});
-      }
-      // if (_.isBoolean(value)) {
-      // }
-      // if (_.isNull()){
-      // }
-    }
-  });
-  return result
-}
-
-if (document.getElementById('testComposerJSONPayload')) {
-  //used keypress/cut/paste events here (instead of input) because ace editor would not register backspace/deletions as a change of input
-  document.getElementById('testComposerJSONPayload').addEventListener('keypress', event => {
-    debouncedHandleJSONInput();
-  });
-  document.getElementById('testComposerJSONPayload').addEventListener('cut', event => {
-    debouncedHandleJSONInput();
-  });
-  document.getElementById('testComposerJSONPayload').addEventListener('paste', event => {
-    debouncedHandleJSONInput();
-  });
-}
-
-if (document.getElementById('rulecontainer')) {
-  document.getElementById('rulecontainer').addEventListener('input', event => {
-    //load test javascript
-    console.log('testFormData.length')
-    console.log(testFormData.length)
-    let chaiAssertions = _.map(testFormData, function(formEntry) {
-      // if (formEntry.condition === '.to.exist' || formEntry.condition === '.to.not.exist') {
-      if (formEntry.type === 'object') {
-        return 'expect(' + formEntry.propertyName + ')' + formEntry.condition;
-      }
-      if (formEntry.type === 'string') {
-        return 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '")';
-      }
-      if (formEntry.type === 'number') {
-        return 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.value + ')';
-      }
-    })
-    console.log(chaiAssertions)
-    editors[1].setValue(_.join(chaiAssertions, '\n\n'))
-
-
-  });
-}
-
-let debouncedHandleJSONInput = debounceAFunction(handleJSONInput, 300)
-
-function debounceAFunction(functionToDebounce, delay) {
-  let timeoutId;
-  return function (...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      functionToDebounce(...args);
-    }, delay);
-  };
-}
-
-let editorNames = [
-  { name: 'spectralRule', type: 'ace/mode/yaml' },
-  { name: 'spectralCustomFunctions', type: 'ace/mode/javascript' },
-  { name: 'openApiSpec', type: 'ace/mode/yaml' },
-  { name: 'testComposerJSONPayload', type: 'ace/mode/json' },
-  { name: 'testJS', type: 'ace/mode/javascript' }
-]
-let editors = []
-
-for (let editor of editorNames) {
-  ace.require('ace/ext/language_tools')
-  if (document.getElementById(editor.name)) {
-    var thisEditor = ace.edit(editor.name)
-    thisEditor.setTheme('ace/theme/monokai')
-    thisEditor.session.setMode(editor.type)
-    thisEditor.session.setTabSize(2)
-    thisEditor.session.setUseSoftTabs(true)
-    thisEditor.setOptions({
-      enableBasicAutocompletion: true,
-      enableSnippets: true,
-      enableLiveAutocompletion: false
-    })
-    editors.push(thisEditor)
-  }
-}
+//
+// //generate assertions based on data in the form
+// function generateChaiAssertions () {
+//   let chaiAssertions = _.map(testFormData, function (formEntry) {
+//     // if (formEntry.condition === '.to.exist' || formEntry.condition === '.to.not.exist') {
+//     if (formEntry.type === 'object') {
+//       return 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '();';
+//     }
+//     if (formEntry.type === 'string') {
+//       return 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '");';
+//     }
+//     if (formEntry.type === 'number') {
+//       return 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.value + ');';
+//     }
+//   })
+//   editors[1].setValue(_.join(chaiAssertions, '\n\n'))
+// }
+//
+//
+//
+// if (document.getElementById('testComposerJSONPayload')) {
+//   //used keypress/cut/paste events here (instead of "input" event) because ace editor would not register backspace/deletions/pastes as a change of input
+//   document.getElementById('testComposerJSONPayload').addEventListener('keydown', event => {
+//     console.log('1')
+//     debouncedHandleJSONInput();
+//   });
+//   document.getElementById('testComposerJSONPayload').addEventListener('change', event => {
+//     console.log('3')
+//     debouncedHandleJSONInput();
+//   });
+//   document.getElementById('testComposerJSONPayload').addEventListener('cut', event => {
+//     debouncedHandleJSONInput();
+//   });
+//   document.getElementById('testComposerJSONPayload').addEventListener('paste', event => {
+//     debouncedHandleJSONInput();
+//   });
+// }
+//
+// let debouncedHandleJSONInput = debounceAFunction(handleJSONInput, 300)
+//
+// function debounceAFunction(functionToDebounce, delay) {
+//   let timeoutId;
+//   return function (...args) {
+//     clearTimeout(timeoutId);
+//     timeoutId = setTimeout(() => {
+//       functionToDebounce(...args);
+//     }, delay);
+//   };
+// }
+//
+// Handlebars.registerPartial('list', "                                                                        \
+//       {{#each items}}                                                                                                     \
+//         <div class='row'>                                                                                                 \
+//           <div class='form-group col-sm-5\'>                                                                              \
+//             <input type='text' class='form-control form-control-sm' id='propertyName' disabled='true' value={{propertyName}}> \
+//           </div>                                                                                                          \
+//           <div class=\"form-group col-sm-2\">                                                                             \
+//             <select class=\"form-control-sm\" id=\"conditionSelect{{@index}}\">                                           \
+//               {{#if formValueFieldEnabled}}                                                                                           \
+//               <option value = '.to.equal'>=</option>                                                                          \
+//               <option value = '.to.be.above'>&gt;</option>                                                                       \
+//               <option value = '.to.be.below'>&lt;</option>                                                                       \
+//               {{else}}                                                                                                    \
+//                 <option value = '.to.exist'>Exists</option>                                                                   \
+//                 <option value = '.to.not.exist'>!Exists</option>                                                              \
+//               {{/if}}                                                                                                     \
+//             </select>                                                                                                     \
+//           </div>                                                                                                          \
+//           <div class=\"form-group col-sm-5\">                                                                             \
+//             {{#if value}}                                                                                                 \
+//             <input type=\"text\" class=\"form-control form-control-sm\" id=\"propertyName{{@index}}\" value='{{value}}'> \
+//             {{else}}                                                                                                      \
+//             <input type=\"text\" class=\"form-control form-control-sm\" id=\"propertyName{{@index}}\" disabled=\"true\">  \
+//             {{/if}}                                                                                                       \
+//           </div>                                                                                                          \                                                                                                      \
+//         </div>                                                                                                            \                                                                                                      \
+//       {{/each}}                                                                                                           \
+//     ")
+//

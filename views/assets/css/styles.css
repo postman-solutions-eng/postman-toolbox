@@ -87,6 +87,24 @@ h4 {
   text-decoration: none;
 }
 
+.form-control-sm {
+  box-sizing: border-box;
+  min-width: 100%;
+  contain: style size layout;
+  font-variant-ligatures: no-common-ligatures;
+  font-size: 1em;
+  font: 12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  height: 19px;
+  line-height: 19px;
+}
+
+.form-group {
+  font-variant-ligatures: no-common-ligatures;
+  font-size: 1em;
+  font: 12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+}
+
+
 .infolink:hover:before {
   color: white;
   background: grey;
