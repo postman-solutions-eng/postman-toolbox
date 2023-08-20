@@ -1,63 +1,82 @@
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="navbar-brand">Visual Test Composer - Compose tests for a provided JSON document interactively</div>
+  <div class="collapse navbar-collapse" id="navbarText">
+    <span class="navbar-text ms-auto">
+      <a class="infolink" data-bs-toggle="modal" data-bs-target="#testComposerInfoModal" href="#"></a>
+    </span>
+  </div>
+</nav>
 <div class="row">
     <div class="col-12">
         <div class="row">
             <div class="col-4 mt-3">
                 <p><strong>JSON Response from API of Interest</strong></p>
-<pre id="testComposerJSONPayload">
-{
-  "coord": {
-    "lon": -122.08,
-    "lat": 37.39
-  },
-  "weather": [
-    {
-     "id": 800,
-      "main": "Clear",
-      "description": "clear sky",
-      "icon": "01d"
-    }
-  ],
-  "base": "stations",
-  "main": {
-    "temp": 22.7,
-    "feels_like": 20.6,
-    "pressure": 1013,
-    "humidity": 45
-  },
-  "visibility": 16093,
-  "wind": {
-    "speed": 3.6,
-    "deg": 0
-  },
-  "clouds": {
-    "all": 0
-  },
-  "dt": 1629025973,
-  "sys": {
-    "type": 1,
-    "id": 5817,
-    "country": "US",
-    "sunrise": 1629002641,
-    "sunset": 1629052889
-  },
-  "timezone": -25200,
-  "id": 420006353,
-  "name": "San Francisco",
-  "cod": 200
-}
+<pre id="jsonEditor">
+// Place a valid JSON document (API response) below.
+//
+// A commented example is also provided below.
+// If you are you new to this tool you can
+// highlight all (Ctrl + A), then uncomment
+// (Ctrl + /), and then delete this paragraph
+// to tinker with this tool using the example.
+//
+//  {
+//  "coord": {
+//    "lon": -122.08,
+//    "lat": 37.39
+//  },
+//  "weather": [
+//    {
+//     "id": 800,
+//      "main": "Clear",
+//      "description": "clear sky",
+//      "icon": "01d"
+//    }
+//  ],
+//  "base": "stations",
+//  "main": {
+//    "temp": 22.7,
+//    "feels_like": 20.6,
+//    "pressure": 1013,
+//    "humidity": 45
+//  },
+//  "visibility": 16093,
+//  "wind": {
+//    "speed": 3.6,
+//    "deg": 0
+//  },
+//  "clouds": {
+//    "all": 0
+//  },
+//  "dt": 1629025973,
+//  "sys": {
+//    "type": 1,
+//    "id": 5817,
+//    "country": "US",
+//    "sunrise": 1629002641,
+//    "sunset": 1629052889
+//  },
+//  "timezone": -25200,
+//  "id": 420006353,
+//  "name": "San Francisco",
+//  "cod": 200
+//}
 </pre>
             </div>
             <div class="col-4 mt-3">
-              <p><strong>Tests</strong></p>
-              <div id="testFormContainer">
+              <p><strong>Test Generation Form</strong></p>
+              <div id="testFormContainer" class="greysCustomizedContainer">
               </div>
             </div>
             <div class="col-4 mt-3">
               <p><strong>Test JS (paste this into the Tests tab within Postman)</strong></p>
               <pre id="testJS">
-let x = y;
+// function HelloWorld = function() {
+//   console.log("Hello World!");
+// }
               </pre>
             </div>
         </div>
     </div>
 </div>
+<script src='js/testComposer.js'></script>

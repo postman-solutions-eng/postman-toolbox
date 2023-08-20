@@ -1,15 +1,15 @@
 <!-- Modal -->
 <div
   class='modal modal-xl fade bg-dark'
-  id='infoModal'
+  id='governancePlaygroundInfoModal'
   tabindex='-1'
-  aria-labelledby='infoModalLabel'
+  aria-labelledby='governancePlaygroundInfoModalLabel'
   aria-hidden='true'
 >
   <div class='modal-dialog'>
     <div class='modal-content'>
       <div class='modal-header'>
-        <h1 class='modal-title fs-5' id='infoModalLabel'>About this tool</h1>
+        <h1 class='modal-title fs-5' id='governancePlaygroundInfoModalLabel'>About this tool</h1>
         <button
           type='button'
           class='btn-close'
@@ -40,7 +40,7 @@
             allows you to search through JSON documents for elements that are
             then evaluated against the Spectral rulesets.</p>
           <h5>How to use this tool?</h5>
-          <p>A getting started guide is hosted on the 
+          <p>A getting started guide is hosted on the
             <a
               href='https://github.com/postman-solutions-eng/governance-rules-playground/wiki/1.-Getting-Started-Guide'
               target='_blank'
@@ -56,6 +56,71 @@
           <p>Data submitted to this service for validation purposes is not
             stored or tracked. That said, please don't go submitting sensitive
             information online.</p>
+        </div>
+      </div>
+      <div class='modal-footer'>
+        <button
+          type='button'
+          class='btn btn-secondary'
+          data-bs-dismiss='modal'
+        >Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class='modal modal-xl fade bg-dark'
+  id='testComposerInfoModal'
+  tabindex='-1'
+  aria-labelledby='testComposerInfoModalLabel'
+  aria-hidden='true'
+>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <h1 class='modal-title fs-5' id='testComposerInfoModalLabel'>About this tool</h1>
+        <button
+          type='button'
+          class='btn-close'
+          data-bs-dismiss='modal'
+          aria-label='Close'
+        ></button>
+      </div>
+      <div class='modal-body'>
+        <div class='text-left'>
+          <p>Use the Visual Test Composer to generate tests via a handy GUI.  Just provide a valid JSON
+            response from the API you wish to test, and the tool will render a form to help you generate tests/chai assertions.  As
+            you edit the fields within the form, the tests/chai assertions will be dynamically updated.   Once you've settled upon your
+            testing logic, copy and paste the generated tests/chai assertions into Postman!</p>
+          <h5>What is Chai?</h5>
+          <p><a
+            href='https://www.chaijs.com/'
+            target='_blank'
+          >Chai</a>
+            or more correctly, the Chai Assertion Library is a javascript package focusing on enabling users to author
+            robust tests using Behavior-Driven-Devlopment and/or Test-Driven-Development practices.  If you are not familiar
+            with Chai, it is quite ubiquitous within the world-wide API ecosystem and is natively included in the Postman testing
+            sandbox (no need to overcome difficulties with importing external libraries)</p>
+          <h5>How to use this tool?</h5>
+          <p>1.  Provide an example response from the API you wish to test in the left-most pane.<br>
+             2.  Watch as a graphical form and tests are generated before your eyes<br>
+             3.  Tweak the form to modify the generated tests (chai assertions)<br>
+             4.  When finished, copy the chai assertions to Postman<br>
+          </p>
+          <h5>Bugs/Issues/Feedback</h5>
+          <p>The source code for this project is available on
+            <a
+              href='https://github.com/postman-solutions-eng/governance-rules-playground/issues'
+              target='_blank'
+            >Github</a>.  Please raise an issue there or feel free to submit a
+            PR.  Support for this tool is best-effort.  *Importantly* this tool is not officially supported by Postman Inc.
+            and was written by members of our Solutions to enable and support out customers as much as we are able, but does not have the
+            weight of the entire Postman organization behind it</p>
+          <h5>Privacy</h5>
+          <p>All computation/generation for the Visual Test Composer is performed in client-side javascript and no JSON,
+            form information, or chai assertions leave your machine unless an action is explicitly performed by you
+            (via copy/paste for example)</p>
         </div>
       </div>
       <div class='modal-footer'>

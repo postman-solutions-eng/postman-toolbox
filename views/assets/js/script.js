@@ -140,7 +140,5 @@ for (let editor of editorNames) {
     enableSnippets: true,
     enableLiveAutocompletion: false
   })
-  // thisEditor.container.addEventListener('keydown', function() {console.log('2')})
   editors.push(thisEditor)
-
 }

@@ -45,9 +45,9 @@ pre[class*='language-'] {
   font-size: 1em;
 }
 
-#testComposerJSONPayload,
+#jsonEditor,
 #testJS {
-  height: 800px;
+  height: 80vh;
   position: relative;
   top: 0;
   right: 0;
@@ -55,6 +55,11 @@ pre[class*='language-'] {
   left: 0;
   font-size: 1em;
 }
+
+/*Custom class to override bootstrap color defaults*/
+/*#schoberModifiedTableColoring {*/
+/*  --bs-table-bg: #272822*/
+/*}*/
 
 .info p {
   margin-top: 10px;
@@ -86,23 +91,39 @@ h4 {
   text-decoration: none;
 }
 
-.form-control-sm {
-  box-sizing: border-box;
+.form-control-sm-greyedits {
+  /*box-sizing: border-box;*/
   min-width: 100%;
-  contain: style size layout;
-  font-variant-ligatures: no-common-ligatures;
-  font-size: 1em;
-  font: 12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  /*contain: style size layout;*/
+  /*font-variant-ligatures: no-common-ligatures;*/
+  /*font-size: 1em;*/
+  font: 14px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
   height: 19px;
   line-height: 19px;
 }
 
-.form-group {
-  font-variant-ligatures: no-common-ligatures;
-  font-size: 1em;
-  font: 12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+.form-control-greyedits {
+  display: block;
+  width: 100%;
+  /*padding: 0.375rem 0.75rem;*/
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 0.375rem;
+  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 
+.greysCustomizedContainer {
+  height: 80vh;
+  overflow-y:scroll;
+}
 
 .infolink:hover:before {
   color: white;

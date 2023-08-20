@@ -1,56 +1,56 @@
-
 //data containers referenced across this entire component
 let testFormData = [];
-
-//invoke initial call handleJSONInput to put meaningful data on the user's screen
-handleJSONInput();
+let tooltips = [];
 
 // This function is the initial entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
-// this function generates data structure upon which this entire page is reliant (testFormData array), generates the test
-// composition form, registers event listeners upon the various fields within that form, and invokes the generation
+// this function populates the data structure upon which this entire page is reliant (testFormData array), generates the test
+// composition form, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
 // of the chai assertions.
-
 function handleJSONInput() {
-  //zero out testFormData field in case user uses this tool multiple times in a row
+  //reset  testFormData field in case user uses this tool multiple times in a row
   testFormData = []
   let json;
   try {
 
     json = JSON.parse(jsonEditor.getValue())
-    //temporarily remove event handler so we can modify the json (aka beautify it)
+    //temporarily remove event handler so we can modify the json (aka beautify it) without reinvoking this function
+    //and causing an infinite loop
     jsonEditor.getSession().off('change', debouncedHandleJSONInput)
     //beautify input
     let cursorPos = jsonEditor.getCursorPosition()
     jsonEditor.setValue(JSON.stringify(json, null, 2))
     jsonEditor.clearSelection()
     jsonEditor.moveCursorTo(cursorPos.row, cursorPos.column)
-    //restore listener
+    //restore event handler
     jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
-    generateForm(json)
+    generateTestForm(json)
 
     //load template
-    let template = Handlebars.compile("<ul>{{> list}}</ul>")
+    let template = Handlebars.compile("{{> list}}")
 
     //render template
     document.getElementById('testFormContainer').innerHTML = template({items: testFormData});
+
+    //create tooltips on elements where the property length is longer than the textbox displaying it
+    registerTooltips();
 
     //register listeners for each input field
     _.forEach(testFormData, function(formEntry, index) {
 
       let conditionSelect = document.getElementById('conditionSelect' + index)
-      let propertyNameTextBox = document.getElementById('propertyName' + index)
+      let propertyValueTextBox = document.getElementById('propertyValue' + index)
 
       conditionSelect.addEventListener('input', event => {
         testFormData[index].condition = conditionSelect.options[conditionSelect.selectedIndex].value;
-        generateChaiAssertions()
+        debouncedGenerateChaiAssertions()
       })
-      propertyNameTextBox.addEventListener('input', event => {
-        testFormData[index].value = propertyNameTextBox.value;
-        generateChaiAssertions()
+      propertyValueTextBox.addEventListener('input', event => {
+        testFormData[index].value = propertyValueTextBox.value;
+        debouncedGenerateChaiAssertions()
       })
     })
-    //generate initial set of assertions
+    //generate initial set of assertions for current JSON
     generateChaiAssertions()
   }
   catch (e) {
@@ -59,7 +59,7 @@ function handleJSONInput() {
 }
 
 //recursive function that generates form entries based on the JSON payload provided by the user
-function generateForm(obj, path) {
+function generateTestForm(obj, path) {
   if (!path) {path = ""}
   _.each(obj, function (value, key) {
 
@@ -81,13 +81,15 @@ function generateForm(obj, path) {
       key = "." + key
     }
 
+    //populate testFormData array with relevant data so that the testForm and chai assertions can be rendered to the screen
+    //
     //note that due to Handlebars' comparatively primitive templating logic, one cannot easily do comparisons for the purposes
     //of displaying a template.  AKA I can not test for the value of the "type" property without writing a hacky "helper function".
     // Consequently, I had to add a seemingly superfluous field called 'formValueFieldEnabled' to give the templating logic
     // something to test for to determine whether the value field should be enabled (or not) in the form
     if (_.isObject(value)) {
       testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: false, condition: '.to.exist', type: 'object'});
-      generateForm(value, path === "" ? key : path + key)
+      generateTestForm(value, path === "" ? key : path + key)
     } else {
       if (_.isNumber(value)) {
         testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'number', value: value});
@@ -99,7 +101,7 @@ function generateForm(obj, path) {
   });
 }
 
-//generate assertions based on data in the form
+//generate chai assertions based on data in the form
 function generateChaiAssertions () {
   let chaiAssertions = _.map(testFormData, function (formEntry) {
     if (formEntry.type === 'object') {
@@ -113,6 +115,7 @@ function generateChaiAssertions () {
     }
   })
   testJSEditor.setValue(_.join(chaiAssertions, '\n\n'))
+  testJSEditor.clearSelection()
 }
 
 //////////////////////////////////////
@@ -121,7 +124,7 @@ function generateChaiAssertions () {
 
 //Initialize/Config Editors
 ace.require('ace/ext/language_tools')
-let jsonEditor = ace.edit('testComposerJSONPayload')
+let jsonEditor = ace.edit('jsonEditor')
 jsonEditor.setTheme('ace/theme/monokai')
 jsonEditor.session.setMode('ace/mode/json')
 jsonEditor.session.setTabSize(2)
@@ -142,13 +145,24 @@ testJSEditor.setOptions({
   enableLiveAutocompletion: false
 })
 
-
-
-//Debounce handleJSONInput so that we aren't regenerating the form on every single keystroke
+//Debounce functions that react to user input so we aren't running them unnecessarily (i.e. on every single keystroke)
 let debouncedHandleJSONInput = debounceAFunction(handleJSONInput, 300)
+let debouncedGenerateChaiAssertions = debounceAFunction(generateChaiAssertions, 300)
+let debouncedRegisterTooltips = debounceAFunction(registerTooltips, 300)
 
 //Register Event Listeners for JSON Editor
 jsonEditor.getSession().on('change', debouncedHandleJSONInput)
+
+//invoke handleJSONinput on document load
+document.addEventListener('DOMContentLoaded', function() {
+  handleJSONInput()
+});
+
+//watch for resizes of the testForm, so that we can recalculate tooltips
+let elementToObserve = document.getElementById('testFormContainer');
+let resizeObserver = new ResizeObserver(debouncedRegisterTooltips);
+resizeObserver.observe(elementToObserve);
+
 
 //Debouncer
 function debounceAFunction(functionToDebounce, delay) {
@@ -161,33 +175,73 @@ function debounceAFunction(functionToDebounce, delay) {
   };
 }
 
+function registerTooltips () {
+  //garbage collect existing tooltips - doing it this way because I believe registering a tooltip associates it with
+  //the JS representation of the DOM (such that just setting the tooltips array to [] would NOT cause the garbage collector
+  //to destroy them).  I have not confirmed this, but I'm doing it this way regardless because its safer
+  _.each(tooltips, function(tooltip) {
+    tooltip.dispose()
+  })
+
+  tooltips = []
+
+  //lookup elements with tooltip flag and register JS tooltips for them.  Specifically, we want to pop up a tooltip
+  //if the property name length exceeds the length of the textbox that is displaying it
+  //
+  //Note that we have the textbox (input) element disabled to prevent userinput.  When an input is disabled,
+  //it is noninteractive preventing us from putting tooltips on it (per bootstrap documentation).
+  //Consequently, we must put the tooltip on the parent <td> element, which is indeed what I did
+  //in the template (see testComposer.hbs)
+  let elementsThatMightNeedToolTips = document.querySelectorAll("[data-bs-toggle='tooltip']")
+  _.each(elementsThatMightNeedToolTips, function (singleElement) {
+    let childInput = singleElement.querySelector('input')
+
+    //check if they actually need tooltips
+    if (childInput.scrollWidth > childInput.offsetWidth) {
+      tooltips.push(new bootstrap.Tooltip(singleElement))
+    }
+  })
+}
+
 //Register partial template for use in form
-Handlebars.registerPartial('list', "                                                                        \
-      {{#each items}}                                                                                                     \
-        <div class='row'>                                                                                                 \
-          <div class='form-group col-sm-5\'>                                                                              \
-            <input type='text' class='form-control form-control-sm' id='propertyName' readonly='true' value={{propertyName}}> \
-          </div>                                                                                                          \
-          <div class=\"form-group col-sm-3\">                                                                             \
-            <select class=\"form-control-sm\" id=\"conditionSelect{{@index}}\">                                           \
-              {{#if formValueFieldEnabled}}                                                                                           \
-              <option value = '.to.equal'>=</option>                                                                          \
-              <option value = '.to.be.above'>&gt;</option>                                                                       \
-              <option value = '.to.be.below'>&lt;</option>                                                                       \
-              {{else}}                                                                                                    \
-                <option value = '.to.exist'>Exists</option>                                                                   \
-                <option value = '.to.not.exist'>!Exists</option>                                                              \
-              {{/if}}                                                                                                     \
-            </select>                                                                                                     \
-          </div>                                                                                                          \
-          <div class=\"form-group col-sm-4\">                                                                             \
-            {{#if value}}                                                                                                 \
-            <input type=\"text\" class=\"form-control form-control-sm\" id=\"propertyName{{@index}}\" value='{{value}}'> \
-            {{else}}                                                                                                      \
-            <input type=\"text\" class=\"form-control form-control-sm\" id=\"propertyName{{@index}}\" disabled=\"true\">  \
-            {{/if}}                                                                                                       \
-          </div>                                                                                                          \                                                                                                      \
-        </div>                                                                                                            \                                                                                                      \
-      {{/each}}                                                                                                           \
-    ")
+Handlebars.registerPartial('list', "\
+  <table class='table table-dark table-sm'>\
+    <thead>\
+      <tr>\
+        <th scope='col'>Property</th>\
+        <th scope='col'>Condition</th>\
+        <th scope='col'>Value</th>\
+      </tr>\
+    </thead>\
+    <tbody>\
+    {{#each items}}\
+      <tr>\
+      <td data-bs-toggle='tooltip' data-bs-placement=\"bottom\" data-bs-title=\"{{propertyName}}\">\
+        <input type='text' class='form-control-greyedits form-control-sm-greyedits bg-dark text-white' id='propertyName{{@index}}' value='{{propertyName}}' disabled=''true>\
+      </td>\
+      <td>\
+        <select class=\"form-control-sm-greyedits bg-dark text-white\" id=\"conditionSelect{{@index}}\">\
+          {{#if formValueFieldEnabled}}\
+            <option value = '.to.equal'>=</option>\
+            <option value = '.to.be.above'>&gt;</option>\
+            <option value = '.to.be.at.least'>&gt;=</option>\
+            <option value = '.to.be.below'>&lt;</option>\
+            <option value = '.to.be.at.most'>&lt;=</option>\
+          {{else}}\
+            <option value = '.to.exist'>Exists</option>\
+            <option value = '.to.not.exist'>!Exists</option>\
+          {{/if}}\
+        </select>\
+      </td>\
+      <td>\
+        {{#if value}}\
+          <input type=\"text\" class=\"form-control-greyedits form-control-sm-greyedits bg-dark text-white\" id=\"propertyValue{{@index}}\" value='{{value}}'>\
+        {{else}}\
+          <div class=\"form-control-sm-greyedits\" id=\"propertyValue{{@index}}\">N/A</div>\
+        {{/if}}\
+      </td>\
+      </tr>\
+    {{/each}}\
+  </table>\
+")
 
