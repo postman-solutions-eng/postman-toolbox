@@ -56,11 +56,6 @@ pre[class*='language-'] {
   font-size: 1em;
 }
 
-/*Custom class to override bootstrap color defaults*/
-/*#schoberModifiedTableColoring {*/
-/*  --bs-table-bg: #272822*/
-/*}*/
-
 .info p {
   margin-top: 10px;
   font-size: 1em;

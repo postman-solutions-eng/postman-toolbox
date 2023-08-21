@@ -28,7 +28,6 @@ function handleJSONInput() {
 
     //load template
     let template = Handlebars.compile("{{> list}}")
-
     //render template
     document.getElementById('testFormContainer').innerHTML = template({items: testFormData});
 
@@ -69,7 +68,7 @@ function generateTestForm(obj, path) {
     //    "name": "Grey"
     //      "10": "the key for this value is 10"
     // }
-    // In both cases, the appropriate way to index to this value is with bracket notation i.e. testObject[10]
+    // In both cases i.e. array or object, the appropriate way to index to this value is with bracket notation i.e. testObject[10]
     if (_.isNumber(key) && path !== "") {
       key = "[" + key + "]"
     }
@@ -87,16 +86,18 @@ function generateTestForm(obj, path) {
     //of displaying a template.  AKA I can not test for the value of the "type" property without writing a hacky "helper function".
     // Consequently, I had to add a seemingly superfluous field called 'formValueFieldEnabled' to give the templating logic
     // something to test for to determine whether the value field should be enabled (or not) in the form
-    if (_.isObject(value)) {
+    if (_.isObject(value)) {   //note that _.isObject will pass for both arrays and objects by design, and we rely on that behavior here:
       testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: false, condition: '.to.exist', type: 'object'});
       generateTestForm(value, path === "" ? key : path + key)
-    } else {
-      if (_.isNumber(value)) {
-        testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'number', value: value});
-      }
-      if (_.isString(value)) {
+    }
+    else if (_.isString(value)) {
         testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', value: value});
-      }
+    }
+    //might need to eventually add clauses for all Javascript primitives.   remaining ones to be accounted for are Null, bool, undefined, Symbol, and Number.
+    //for the time being I can't think of a reason to need to account for these individually, so we catch them all in this else statement.  It was originally
+    //authored to address the _.isNumber usecase, but realized afterwards that this case applies to all the remaining primitives.
+    else {
+      testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'other', value: value});
     }
   });
 }
@@ -105,13 +106,13 @@ function generateTestForm(obj, path) {
 function generateChaiAssertions () {
   let chaiAssertions = _.map(testFormData, function (formEntry) {
     if (formEntry.type === 'object') {
-      return 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '();';
+      return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '();' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + '();' + '\n});';
     }
     if (formEntry.type === 'string') {
-      return 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '");';
+      return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '");' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '");' + '\n});';
     }
-    if (formEntry.type === 'number') {
-      return 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.value + ');';
+    if (formEntry.type === 'other') {
+      return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.value + ');' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.value + ');' + '\n});';
     }
   })
   testJSEditor.setValue(_.join(chaiAssertions, '\n\n'))
@@ -145,7 +146,7 @@ testJSEditor.setOptions({
   enableLiveAutocompletion: false
 })
 
-//Debounce functions that react to user input so we aren't running them unnecessarily (i.e. on every single keystroke)
+//Debounce functions that react to user input so we aren't running them unnecessarily (e.g. on every single keystroke)
 let debouncedHandleJSONInput = debounceAFunction(handleJSONInput, 300)
 let debouncedGenerateChaiAssertions = debounceAFunction(generateChaiAssertions, 300)
 let debouncedRegisterTooltips = debounceAFunction(registerTooltips, 300)
@@ -175,6 +176,7 @@ function debounceAFunction(functionToDebounce, delay) {
   };
 }
 
+//create tooltips in cases where property names in the testform are cut off.
 function registerTooltips () {
   //garbage collect existing tooltips - doing it this way because I believe registering a tooltip associates it with
   //the JS representation of the DOM (such that just setting the tooltips array to [] would NOT cause the garbage collector
@@ -183,6 +185,7 @@ function registerTooltips () {
     tooltip.dispose()
   })
 
+  //resize tooltips array back to zero.
   tooltips = []
 
   //lookup elements with tooltip flag and register JS tooltips for them.  Specifically, we want to pop up a tooltip
@@ -213,7 +216,7 @@ Handlebars.registerPartial('list', "\
         <th scope='col'>Value</th>\
       </tr>\
     </thead>\
-    <tbody>\
+    <tbody class='table-group-divider'>\
     {{#each items}}\
       <tr>\
       <td data-bs-toggle='tooltip' data-bs-placement=\"bottom\" data-bs-title=\"{{propertyName}}\">\
