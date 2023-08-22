@@ -106,7 +106,7 @@ function generateTestForm(obj, path) {
 function generateChaiAssertions () {
   let chaiAssertions = _.map(testFormData, function (formEntry) {
     if (formEntry.type === 'object') {
-      return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '();' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + '();' + '\n});';
+      return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
     }
     if (formEntry.type === 'string') {
       return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '");' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '");' + '\n});';
