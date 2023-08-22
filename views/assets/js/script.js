@@ -68,7 +68,6 @@ async function validate () {
         for (let spectralResult of data.spectralResults) {
           let tr = document.createElement('tr')
 
-
           let codeTd = document.createElement('td')
           codeTd.innerText = spectralResult.code
 
@@ -81,7 +80,6 @@ async function validate () {
           let severityTd = document.createElement('td')
           switch (spectralResult.severity) {
             case 0:
-
               severityTd.innerText = 'error'
               break
             case 1:
