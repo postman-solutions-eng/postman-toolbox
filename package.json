@@ -16,9 +16,11 @@
     "@stoplight/spectral-runtime": "^1.1.2",
     "express": "^4.18.2",
     "express-handlebars": "^6.0.6",
+    "express-rate-limit": "^6.9.0",
     "fs": "^0.0.1-security",
     "js-yaml": "^4.1.0",
     "jsonpath-plus": "^7.2.0",
+    "openai": "^3.3.0",
     "uuidv4": "^6.2.13"
   },
   "devDependencies": {
