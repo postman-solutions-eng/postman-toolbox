@@ -43,3 +43,9 @@ This doesn't work correctly.
   status: "OK"
 }
 ```
+
+### License
+
+See <a href="./LICENSE">LICENSE</a>.
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground?ref=badge_large)
