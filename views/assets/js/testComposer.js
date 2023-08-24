@@ -7,7 +7,7 @@ let tooltips = [];
 // composition form, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
 // of the chai assertions.
 function handleJSONInput() {
-  //reset  testFormData field in case user uses this tool multiple times in a row
+  //reset testFormData field in case user uses this tool multiple times in a row
   testFormData = []
   let json;
   try {
@@ -39,15 +39,29 @@ function handleJSONInput() {
 
       let conditionSelect = document.getElementById('conditionSelect' + index)
       let propertyValueTextBox = document.getElementById('propertyValue' + index)
+      let enabledSlider = document.getElementById('enabledSlider' + index)
 
       conditionSelect.addEventListener('input', event => {
         testFormData[index].condition = conditionSelect.options[conditionSelect.selectedIndex].value;
         debouncedGenerateChaiAssertions()
       })
       propertyValueTextBox.addEventListener('input', event => {
-        testFormData[index].value = propertyValueTextBox.value;
+        testFormData[index].propertyValue = propertyValueTextBox.value;
         debouncedGenerateChaiAssertions()
+        propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
+        debouncedRegisterTooltips() //change this function to just re-register the single tooltip rather than regenerate all.
       })
+      enabledSlider.addEventListener('click', event => {
+        if (enabledSlider.checked) {
+          console.log("Checkbox is checked");
+          testFormData[index].enabled = true;
+        } else {
+          console.log("Checkbox is unchecked");
+          testFormData[index].enabled = false;
+        }
+        generateChaiAssertions()
+      })
+
     })
     //generate initial set of assertions for current JSON
     generateChaiAssertions()
@@ -59,24 +73,56 @@ function handleJSONInput() {
 
 //recursive function that generates form entries based on the JSON payload provided by the user
 function generateTestForm(obj, path) {
-  if (!path) {path = ""}
   _.each(obj, function (value, key) {
 
-    // object keys in json must ALWAYS be strings.  Consequently, if you see a numeric key, it means you are in an array
-    // or have a key in the form of:
-    // testObject: {
-    //    "name": "Grey"
-    //      "10": "the key for this value is 10"
+    // let testObject = {
+    //      "name": "Grey",
+    //        "10": "the key for this value is 10"
     // }
-    // In both cases i.e. array or object, the appropriate way to index to this value is with bracket notation i.e. testObject[10]
-    if (_.isNumber(key) && path !== "") {
+    // let testArray = [1,2,3,4,5];
+    // console.log("testObject")
+    // console.log(testObject[10])
+    // console.log(testObject["10"])
+    // console.log("endtestObject")
+    // console.log("testArray")
+    // console.log(testArray[0])
+    // console.log(testArray["0"])
+    // console.log("endtestArray")
+
+    // Javascript allows you to index to entries in javascript objects and arrays (where the keys are explicitly strings or
+    // integers respectively - note: technically a Javascript object can have keys that ARE NOT strings, but for the purposes
+    // of a javascript object created from parsing a JSON object, all keys will be strings) using both bracket notation
+    // where the key is passed in either as a number or a string.
+    // e.g:
+    // in the below object, both testObject[10] and testObject["10"] will return "the key for this value is 10" despite the fact that the
+    // key is technically a string.
+    //
+    //  let testObject = {
+    //      "name": "Grey",
+    //      "10": "the key for this value is 10"
+    //  }
+    //
+    //  Arrays function the same... myArray[10] and myArray["10] will both return the value at index 10.
+    //  However, coding conventions dictate that generally you index to properties of an object
+    //  using dot notation, or bracket notation with a string value passed in... depending on whether the key to the value
+    //  is a valid identifier or not.  (e.g. testObject.name = "grey"   or testObject["10"] = "the key for this value is 10").
+    //  With arrays, you must index using bracket notation as all keys are numbers (and therefore not valid identifers,
+    //  so bracket notation becomes a requirement).  By convention, this number is passed in as number, and not a string
+    //  e.g. myArray[10] is generally used, not myArray["10"].
+    //
+    //  The code below is generating chai assertions (aka javascript code), so we are trying to account for the above
+    //  when generating these assertions.  The logic that is trying to account for this is below
+
+    // account for case where the key is a number (and therefore parent object is an array)
+    if (_.isNumber(key) && path) {
       key = "[" + key + "]"
     }
-    //if key has spaces
-    else if (_.isString(key) && _.includes(key, ' ')) {
+    // parent must be an object.... test to see if identifier is invalid and if so use bracket notation with quotes
+    else if (!isValidIdentifier(key)) {
       key = "[\"" + key + "\"]"
     }
-    else if (path !== "") {
+    // otherwise use dot notation.
+    else if (path) {
       key = "." + key
     }
 
@@ -87,17 +133,17 @@ function generateTestForm(obj, path) {
     // Consequently, I had to add a seemingly superfluous field called 'formValueFieldEnabled' to give the templating logic
     // something to test for to determine whether the value field should be enabled (or not) in the form
     if (_.isObject(value)) {   //note that _.isObject will pass for both arrays and objects by design, and we rely on that behavior here:
-      testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: false, condition: '.to.exist', type: 'object'});
-      generateTestForm(value, path === "" ? key : path + key)
+      testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: false, condition: '.to.exist', type: 'object', enabled: true});
+      generateTestForm(value, !path ? key : path + key)
     }
     else if (_.isString(value)) {
-        testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', value: value});
+        testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', enabled: true, propertyValue: value});
     }
     //might need to eventually add clauses for all Javascript primitives.   remaining ones to be accounted for are Null, bool, undefined, Symbol, and Number.
     //for the time being I can't think of a reason to need to account for these individually, so we catch them all in this else statement.  It was originally
     //authored to address the _.isNumber usecase, but realized afterwards that this case applies to all the remaining primitives.
     else {
-      testFormData.push({propertyName: path === "" ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'other', value: value});
+      testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'other', enabled: true, propertyValue: value});
     }
   });
 }
@@ -105,75 +151,20 @@ function generateTestForm(obj, path) {
 //generate chai assertions based on data in the form
 function generateChaiAssertions () {
   let chaiAssertions = _.map(testFormData, function (formEntry) {
-    if (formEntry.type === 'object') {
-      return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
-    }
-    if (formEntry.type === 'string') {
-      return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '");' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.value + '");' + '\n});';
-    }
-    if (formEntry.type === 'other') {
-      return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.value + ');' + '\', () => {\n  pm.expect(pm.response.' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.value + ');' + '\n});';
+    if (formEntry.enabled === true) {
+      if (formEntry.type === 'object') {
+        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
+      }
+      if (formEntry.type === 'string') {
+        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\n});';
+      }
+      if (formEntry.type === 'other') {
+        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\n});';
+      }
     }
   })
-  testJSEditor.setValue(_.join(chaiAssertions, '\n\n'))
+  testJSEditor.setValue(_.join(_.without(chaiAssertions, undefined), '\n\n'))
   testJSEditor.clearSelection()
-}
-
-//////////////////////////////////////
-// Initialization and Setup Section //
-//////////////////////////////////////
-
-//Initialize/Config Editors
-ace.require('ace/ext/language_tools')
-let jsonEditor = ace.edit('jsonEditor')
-jsonEditor.setTheme('ace/theme/monokai')
-jsonEditor.session.setMode('ace/mode/json')
-jsonEditor.session.setTabSize(2)
-jsonEditor.session.setUseSoftTabs(true)
-jsonEditor.setOptions({
-  enableBasicAutocompletion: true,
-  enableSnippets: true,
-  enableLiveAutocompletion: false
-})
-let testJSEditor = ace.edit('testJS')
-testJSEditor.setTheme('ace/theme/monokai')
-testJSEditor.session.setMode('ace/mode/javascript')
-testJSEditor.session.setTabSize(2)
-testJSEditor.session.setUseSoftTabs(true)
-testJSEditor.setOptions({
-  enableBasicAutocompletion: true,
-  enableSnippets: true,
-  enableLiveAutocompletion: false
-})
-
-//Debounce functions that react to user input so we aren't running them unnecessarily (e.g. on every single keystroke)
-let debouncedHandleJSONInput = debounceAFunction(handleJSONInput, 300)
-let debouncedGenerateChaiAssertions = debounceAFunction(generateChaiAssertions, 300)
-let debouncedRegisterTooltips = debounceAFunction(registerTooltips, 300)
-
-//Register Event Listeners for JSON Editor
-jsonEditor.getSession().on('change', debouncedHandleJSONInput)
-
-//invoke handleJSONinput on document load
-document.addEventListener('DOMContentLoaded', function() {
-  handleJSONInput()
-});
-
-//watch for resizes of the testForm, so that we can recalculate tooltips
-let elementToObserve = document.getElementById('testFormContainer');
-let resizeObserver = new ResizeObserver(debouncedRegisterTooltips);
-resizeObserver.observe(elementToObserve);
-
-
-//Debouncer
-function debounceAFunction(functionToDebounce, delay) {
-  let timeoutId;
-  return function (...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      functionToDebounce(...args);
-    }, delay);
-  };
 }
 
 //create tooltips in cases where property names in the testform are cut off.
@@ -199,12 +190,80 @@ function registerTooltips () {
   _.each(elementsThatMightNeedToolTips, function (singleElement) {
     let childInput = singleElement.querySelector('input')
 
+    console.log(singleElement)
     //check if they actually need tooltips
     if (childInput.scrollWidth > childInput.offsetWidth) {
       tooltips.push(new bootstrap.Tooltip(singleElement))
     }
   })
 }
+
+//////////////////////////////////////
+// Initialization and Setup Section //
+//////////////////////////////////////
+
+//Initialize/Config Editors
+ace.require('ace/ext/language_tools')
+let jsonEditor = ace.edit('jsonEditor')
+jsonEditor.setTheme('ace/theme/monokai')
+jsonEditor.session.setMode('ace/mode/json')
+jsonEditor.session.setTabSize(2)
+jsonEditor.session.setUseSoftTabs(true)
+jsonEditor.setOptions({
+  enableBasicAutocompletion: true,
+  enableSnippets: true,
+  enableLiveAutocompletion: false
+})
+let testJSEditor = ace.edit('testJSEditor')
+testJSEditor.setTheme('ace/theme/monokai')
+testJSEditor.session.setMode('ace/mode/javascript')
+testJSEditor.session.setTabSize(2)
+testJSEditor.session.setUseSoftTabs(true)
+testJSEditor.setOptions({
+  enableBasicAutocompletion: true,
+  enableSnippets: true,
+  enableLiveAutocompletion: false
+})
+
+//Debounce functions that react to user input so we aren't running them unnecessarily (e.g. on every single keystroke)
+let debouncedHandleJSONInput = debounceAFunction(handleJSONInput, 300)
+let debouncedGenerateChaiAssertions = debounceAFunction(generateChaiAssertions, 300)
+let debouncedRegisterTooltips = debounceAFunction(registerTooltips, 300)
+
+//Register Event Listeners for JSON Editor
+jsonEditor.getSession().on('change', debouncedHandleJSONInput)
+
+//invoke  handleJSONinput on document load
+document.addEventListener('DOMContentLoaded', function() {
+  handleJSONInput()
+});
+
+//watch for resizes of the testForm, so that we can recalculate tooltips
+let elementToObserve = document.getElementById('testFormContainer');
+let resizeObserver = new ResizeObserver(debouncedRegisterTooltips);
+resizeObserver.observe(elementToObserve);
+
+//function to test keys in JSON object so we can know if out chai assertions can reference them via . notation, or we
+//must resort to [] notation.  JS documentation says that . notation must use valid identifiers the characteristics of which
+//are comprehended in this regex.
+function isValidIdentifier(key) {
+  let identifierRegex = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+  return identifierRegex.test(key);
+}
+
+//Debouncer
+function debounceAFunction(functionToDebounce, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      functionToDebounce(...args);
+    }, delay);
+  };
+}
+
+//change left panel button styles
+document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
 
 //Register partial template for use in form
 Handlebars.registerPartial('list', "\
@@ -214,16 +273,17 @@ Handlebars.registerPartial('list', "\
         <th scope='col'>Property</th>\
         <th scope='col'>Condition</th>\
         <th scope='col'>Value</th>\
+        <th scope = 'col'>Enabled?</th>\
       </tr>\
     </thead>\
     <tbody class='table-group-divider'>\
     {{#each items}}\
       <tr>\
-      <td data-bs-toggle='tooltip' data-bs-placement=\"bottom\" data-bs-title=\"{{propertyName}}\">\
+      <td data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyName}}'>\
         <input type='text' class='form-control-greyedits form-control-sm-greyedits bg-dark text-white' id='propertyName{{@index}}' value='{{propertyName}}' disabled=''true>\
       </td>\
       <td>\
-        <select class=\"form-control-sm-greyedits bg-dark text-white\" id=\"conditionSelect{{@index}}\">\
+        <select class='form-control-sm-greyedits bg-dark text-white' id='conditionSelect{{@index}}'>\
           {{#if formValueFieldEnabled}}\
             <option value = '.to.equal'>=</option>\
             <option value = '.to.be.above'>&gt;</option>\
@@ -236,15 +296,20 @@ Handlebars.registerPartial('list', "\
           {{/if}}\
         </select>\
       </td>\
+      {{#if formValueFieldEnabled}}\
+      <td data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyValue}}'>\
+        <input type='text' class='form-control-greyedits form-control-sm-greyedits bg-dark text-white' id='propertyValue{{@index}}' value='{{propertyValue}}'>\
+      {{else}}\
       <td>\
-        {{#if value}}\
-          <input type=\"text\" class=\"form-control-greyedits form-control-sm-greyedits bg-dark text-white\" id=\"propertyValue{{@index}}\" value='{{value}}'>\
-        {{else}}\
-          <div class=\"form-control-sm-greyedits\" id=\"propertyValue{{@index}}\">N/A</div>\
-        {{/if}}\
+        <div class='form-control-sm-greyedits' id='propertyValue{{@index}}'>N/A</div>\
+      {{/if}}\
+      </td>\
+      <td class='align-middle'>\
+        <div class='form-check form-switch d-flex justify-content-center align-items-center'>\
+          <input class='form-check-input' type='checkbox' id='enabledSlider{{@index}}' checked>\
+        </div>\
       </td>\
       </tr>\
     {{/each}}\
   </table>\
 ")
-

@@ -211,3 +211,6 @@ async function generate () {
     }
   }
 }
+
+//change left panel button styles
+document.getElementById('governancePlaygroundButton').classList.replace('btn-outline-light', 'btn-light');
