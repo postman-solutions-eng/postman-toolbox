@@ -60,6 +60,7 @@ app.get('/governancePlayground', (req, res) => {
 });
 app.get('/testComposer', (req, res) => {
   res.render('testComposer');
+  console.log('Test Composer accessed');
 });
 
 app.set('trust proxy', 1)
