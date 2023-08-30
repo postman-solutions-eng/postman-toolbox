@@ -1,6 +1,7 @@
 //data containers referenced across this entire component
 let testFormData = [];
 let tooltips = {};
+let currentJSON = {};
 
 // This function is the initial entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
 // this function populates the data structure upon which this entire page is reliant (testFormData array), generates the test
@@ -9,9 +10,8 @@ let tooltips = {};
 function handleJSONInput() {
   //reset testFormData field in case user uses this tool multiple times in a row
   testFormData = []
-  let json;
   try {
-    json = JSON.parse(jsonEditor.getValue())
+    currentJSON = JSON.parse(jsonEditor.getValue())
   }
   catch (e) {
     document.getElementById('testFormContainer').innerHTML = "Invalid JSON.   Please provide a valid JSON document";
@@ -24,13 +24,13 @@ function handleJSONInput() {
   jsonEditor.getSession().off('change', debouncedHandleJSONInput)
   //beautify input
   let cursorPos = jsonEditor.getCursorPosition()
-  jsonEditor.setValue(JSON.stringify(json, null, 2))
+  jsonEditor.setValue(JSON.stringify(currentJSON, null, 2))
   jsonEditor.clearSelection()
   jsonEditor.moveCursorTo(cursorPos.row, cursorPos.column)
   //restore event handler
   jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
-  generateTestForm(json)
+  generateTestForm(currentJSON)
 
   //load template
   let template = Handlebars.compile("{{> list}}")
@@ -43,15 +43,36 @@ function handleJSONInput() {
     let conditionSelect = document.getElementById('conditionSelect' + index)
     let propertyValueTextBox = document.getElementById('propertyValue' + index)
     let enabledSlider = document.getElementById('enabledSlider' + index)
+    let typeSelect = document.getElementById('typeSelect' + index)
 
     //create tooltips on elements where the property length is longer than the textbox displaying it
     registerTooltips()
-
     //add event handlers to the form fields.  These will reinvoke the generation of the chai assertions on any change to the form:
 
     //add event handlers to the dropdown menus for the condition field
     conditionSelect.addEventListener('input', event => {
-      testFormData[index].condition = conditionSelect.options[conditionSelect.selectedIndex].value;
+      let selectedValue = conditionSelect.options[conditionSelect.selectedIndex].value;
+
+      testFormData[index].condition = selectedValue;
+
+      //if they select any operators that don't accept a value, then disable the value input box, and store whatever was there
+      //for future restoration if they change the condition back to something that would expect a value
+      if (selectedValue === '.to.exist' || selectedValue === '.to.not.exist' || selectedValue === '.to.be.true' || selectedValue === '.to.be.false' || selectedValue === '.to.be.null' || selectedValue === '.to.not.be.null') {
+        if (!testFormData[index].oldValue) {
+          testFormData[index].oldValue = propertyValueTextBox.value;
+        }
+        propertyValueTextBox.value = 'N/A';
+        propertyValueTextBox.setAttribute('disabled', true)
+      }
+      //if they select the some other than !exist or exists operators, then enab;e  value input box, and restore
+      //the old value if there was one
+      else {
+        propertyValueTextBox.removeAttribute('disabled')
+        if (testFormData[index].oldValue) {
+          propertyValueTextBox.value = testFormData[index].oldValue;
+          delete testFormData[index].oldValue;
+        }
+      }
       debouncedGenerateChaiAssertions();
     })
 
@@ -119,27 +140,23 @@ function generateTestForm(obj, path) {
       key = "." + key
     }
 
-    // populate testFormData array with relevant data so that the testForm and chai assertions can be rendered to the screen
-    //
-    // note that due to Handlebars' comparatively primitive templating logic, one cannot easily do comparisons for the purposes
-    // of displaying a template.  AKA I can not test for the value of the "type" property without writing a hacky "helper function".
-    // Consequently, I had to add a seemingly superfluous field called 'formValueFieldEnabled' to give the templating logic
-    // something to test for to determine whether the value field should be enabled (or not) in the form
+    //in this series of if-elseif, we account for all the compound and primitive types available in a JSON object: array,object (compound),
+    //and string,bool,number,null (primitive).
     if (_.isObject(value)) {   //note that _.isObject will pass for both arrays and objects by design, and we rely on that behavior here:
-      testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: false, condition: '.to.exist', type: 'object', enabled: true});
+      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.exist', type: 'object', enabled: true});
       generateTestForm(value, !path ? key : path + key)
     }
     else if (_.isString(value)) {
-      testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', enabled: true, propertyValue: value});
+      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.equal', type: 'string', enabled: true, propertyValue: value});
     }
     else if (_.isBoolean(value)) {
-      testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.be', type: 'bool', enabled: true, propertyValue: value});
+      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.be.' + value, type: 'bool', enabled: true});
     }
-    //might need to eventually add clauses for all Javascript primitives.   remaining ones to be accounted for are Null, undefined, Symbol, and Number.
-    //for the time being I can't think of a reason to need to account for these individually, so we catch them all in this else statement.  It was originally
-    //authored to address the _.isNumber usecase, but realized afterwards that this case applies to all the remaining primitives.
-    else {
-      testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'other', enabled: true, propertyValue: value});
+    else if (_.isNumber(value)) {
+      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.equal', type: 'number', enabled: true, propertyValue: value});
+    }
+    else if (_.isNull(value)) {
+      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.be.null', type: 'null', enabled: true});
     }
   });
 }
@@ -148,20 +165,14 @@ function generateTestForm(obj, path) {
 function generateChaiAssertions () {
   let chaiAssertions = _.map(testFormData, function (formEntry) {
     if (formEntry.enabled === true) {
-      if (formEntry.type === 'object') {
+      if (formEntry.type === 'object' || formEntry.type === 'bool' || formEntry.type === 'null' ||  _.includes(['.to.exist','.to.not.exist'], formEntry.condition)) {
         return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
       }
-      if (formEntry.type === 'string') {
-        //check if we are just looking for the value to be present
-        if(_.includes(['.to.exist','.to.not.exist'], formEntry.condition)) {
-          return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
-        }
-        //otherwise check the value
-        else {
-          return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\n});';
-        }
+      else if (formEntry.type === 'string') {
+        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\n});';
       }
-      if (formEntry.type === 'other') {
+      //account for number
+      else {
         return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\n});';
       }
     }
@@ -258,7 +269,24 @@ document.addEventListener('DOMContentLoaded', function() {
 //change left panel button styles to indicate active page
 document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
 
-//Register partial template for use in dynamically generated form
+Handlebars.registerHelper('conditionalRender', function(...args) {
+  //first parameter is the value we are checking
+  let contextValue = args[0];
+  //second through second-to-last parmater are the valid possible values for the value we are checking
+  let validValues = args.slice(1,-1);
+  //last paramter is the handlebars-passed options object that we rely upon
+  let options = args[args.length - 1]
+
+  if (_.includes(validValues, contextValue)) {
+    return options.fn(this); // Render the enclosed template block
+  }
+  else {
+    return options.inverse(this); // Render the else block if present
+  }
+});
+
+//This partial is responsible for rendering the initial state of the form upon a call to handleJSONInput().   Subsequent
+//changes to the form (by manipulating the input fields) are handled by eventlisteners created in the handleJSONInput() function
 Handlebars.registerPartial('list', "\
   <div class='row'>\
     <div class='col-5 ps-0' style='font-size: 0.8rem;'>\
