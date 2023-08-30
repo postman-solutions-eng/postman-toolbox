@@ -114,4 +114,9 @@ h4 {
   overflow-y:auto;
 }
 
+.custom-btn {
+  margin-bottom: 1;
+  font-family: 'Courier New', Courier, monospace;
+}
+
 

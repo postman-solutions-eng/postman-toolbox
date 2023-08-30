@@ -289,7 +289,10 @@ Handlebars.registerHelper('conditionalRender', function(...args) {
 //changes to the form (by manipulating the input fields) are handled by eventlisteners created in the handleJSONInput() function
 Handlebars.registerPartial('list', "\
   <div class='row'>\
-    <div class='col-5 ps-0' style='font-size: 0.8rem;'>\
+    <div class='col-1 ps-0' style='font-size: 0.8rem;'>\
+      Type\
+    </div>\
+    <div class='col-4 ps-0' style='font-size: 0.8rem;'>\
       Property Name\
     </div>\
     <div class='col-3 ps-0' style='font-size: 0.8rem;'>\
@@ -396,6 +399,8 @@ Handlebars.registerPartial('list', "\
     </div>\
   {{/each}}\
 ")
+
+
 
 //////////////////////////////
 // Utility Function Section //
