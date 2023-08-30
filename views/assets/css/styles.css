@@ -41,7 +41,7 @@ pre[class*='language-'] {
 
 #jsonEditor,
 #testJSEditor {
-  height: 80vh;
+  height: 70vh;
   position: relative;
   top: 0;
   right: 0;
@@ -80,38 +80,45 @@ h4 {
   text-decoration: none;
 }
 
-.form-control-sm-greyedits {
-  /*box-sizing: border-box;*/
-  min-width: 100%;
-  /*contain: style size layout;*/
-  /*font-variant-ligatures: no-common-ligatures;*/
-  /*font-size: 1em;*/
-  font: 14px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-  height: 19px;
-  line-height: 19px;
+/*.form-control-sm-greyedits {*/
+/*  !*box-sizing: border-box;*!*/
+/*  !*min-width: 100%;*!*/
+/*  !*contain: style size layout;*!*/
+/*  !*font-variant-ligatures: no-common-ligatures;*!*/
+/*  !*font-size: 1em;*!*/
+/*  font: 14px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;*/
+/*  !*height: 19px;*!*/
+/*  !*line-height: 19px;*!*/
+/*}*/
+
+.custom-smaller-input {
+  padding: 0rem .5rem;
+  font-size: 0.8rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  min-height: .7rem
 }
 
-.form-control-greyedits {
-  display: block;
-  width: 100%;
-  /*padding: 0.375rem 0.75rem;*/
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.5;
-  color: #212529;
-  background-color: #fff;
-  background-clip: padding-box;
-  border: 1px solid #ced4da;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border-radius: 0.375rem;
-  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-}
+/*.form-control-greyedits {*/
+/*  display: block;*/
+/*  width: 100%;*/
+/*  !*padding: 0.375rem 0.75rem;*!*/
+/*  font-size: 14px;*/
+/*  font-weight: 400;*/
+/*  line-height: 1.5;*/
+/*  color: #212529;*/
+/*  background-color: #fff;*/
+/*  background-clip: padding-box;*/
+/*  border: 1px solid #ced4da;*/
+/*  -webkit-appearance: none;*/
+/*  -moz-appearance: none;*/
+/*  appearance: none;*/
+/*  border-radius: 0.375rem;*/
+/*  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;*/
+/*}*/
 
 .greysCustomizedContainer {
-  height: 80vh;
-  overflow-y:scroll;
+  height: 70vh;
+  overflow-y:auto;
 }
 
 .infolink:hover:before {
