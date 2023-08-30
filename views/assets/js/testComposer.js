@@ -277,11 +277,11 @@ Handlebars.registerPartial('list', "\
     <div class='row'>\
       <div class='col-5 ps-0'>\
         <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyName}}'>\
-          <input type='text' class='form-control form-control-sm custom-smaller-input ps-1' id='propertyName{{@index}}' value='{{propertyName}}' disabled=true>\
+          <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyName{{@index}}' value='{{propertyName}}' disabled=true>\
         </div>\
       </div>\
       <div class='col-3 ps-0'>\
-        <select class='form-select form-select-sm custom-smaller-input ps-1' id='conditionSelect{{@index}}'>\
+        <select class='form-select form-select-sm custom-smaller-textbox ps-1' id='conditionSelect{{@index}}'>\
         {{#if formValueFieldEnabled}}\
           <option value = '.to.equal'>=</option>\
           <option value = '.to.not.equal'>!=</option>\
@@ -298,10 +298,10 @@ Handlebars.registerPartial('list', "\
       <div class='col-3 ps-0'>\
       {{#if formValueFieldEnabled}}\
         <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyValue}}'>\
-          <input type='text' class='form-control form-control-sm custom-smaller-input ps-1' id='propertyValue{{@index}}' value='{{propertyValue}}'>\
+          <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyValue{{@index}}' value='{{propertyValue}}'>\
         </div>\
       {{else}}\
-        <input type='text' class='form-control form-control-sm custom-smaller-input ps-1' id='propertyValue{{@index}}' value='N/A' disabled=true>\
+        <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyValue{{@index}}' value='N/A' disabled=true>\
       {{/if}}\
       </div>\
       <div class='col-1 ps-0'>\

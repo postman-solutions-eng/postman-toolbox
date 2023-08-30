@@ -1,3 +1,7 @@
+/**********************************************************************/
+/* Begin section of classes customized for Governance Rule Playground */
+/**********************************************************************/
+
 h5 {
   margin-top: 20px;
 }
@@ -7,18 +11,31 @@ p {
 }
 
 button {
+  /* NOTE TO JORDAN:  This class does not seem to be used anywhere (or perhaps not used *anymore*... maybe it was used at one time
+  and my changes resulted in its elimination.)   Can it be removed?   Additional details: so far we are relying on bootstraps
+  buttons which are assigned via various "btn-*" classes as opposed to a "button" class*/
   margin-bottom: 20px;
 }
 
 pre {
+  /* NOTE TO JORDAN: I would like to remove this class, as at least on the surface, it doesnt feel like its doing anything.
+  The <pre> tag is only used on the ACE editors and they scroll by default on overflow.   However, this change is just a
+  preference and wasn't something I needed to do to make/fix something that was broken as a result of all my additions.
+  In other words, let me know if you had a specific reason for including this or if it can be cleaned up.*/
   overflow: scroll;
 }
 
 pre[class*='language-'] {
+  /* NOTE TO JORDAN: I would like to remove this class, as at least on the surface, it doesnt feel like its doing anything.
+  The <pre> tag is only used on the ACE editors and they scroll by default on overflow.   However, this change is just a
+  preference and wasn't something I needed to do to make/fix something that was broken as a result of all my additions.
+  In other words, let me know if you had a specific reason for including this or if it can be cleaned up.*/
   margin-top: 2px;
 }
 
 .copy {
+  /* NOTE TO JORDAN:  This class does not seem to be used anywhere (or perhaps not used *anymore*... maybe it was used at one time
+  and my changes resulted in its elimination.)   Can it be removed? */
   position: absolute;
   right: 40px;
   background-color: gray;
@@ -39,18 +56,9 @@ pre[class*='language-'] {
   font-size: 1em;
 }
 
-#jsonEditor,
-#testJSEditor {
-  height: 70vh;
-  position: relative;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  font-size: 1em;
-}
-
 .info p {
+  /* NOTE TO JORDAN:  This class does not seem to be used anywhere (or perhaps not used *anymore*... maybe it was used at one time
+  and my changes resulted in its elimination.)   Can it be removed? */
   margin-top: 10px;
   font-size: 1em;
 }
@@ -58,45 +66,9 @@ pre[class*='language-'] {
 .info,
 h3,
 h4 {
+  /* NOTE TO JORDAN:  This class does not seem to be used anywhere (or perhaps not used *anymore*... maybe it was used at one time
+  and my changes resulted in its elimination.)   Can it be removed? */
   margin-top: 15px;
-}
-
-.infolink:before {
-  content: '?';
-  display: inline-block;
-  font-family: sans-serif;
-  font-weight: bold;
-  text-align: center;
-  width: 3ex;
-  height: 3ex;
-  font-size: 2.5ex;
-  line-height: 2.7ex;
-  border-radius: 3ex;
-  margin-right: 4px;
-  padding: 1px;
-  color: white;
-  background: grey;
-  border: 1px solid grey;
-  text-decoration: none;
-}
-
-.custom-smaller-input {
-  padding: 0rem .5rem;
-  font-size: 0.8rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-  min-height: .7rem
-}
-
-.greysCustomizedContainer {
-  height: 70vh;
-  overflow-y:auto;
-}
-
-.infolink:hover:before {
-  color: white;
-  background: grey;
-  border-color: white;
-  text-decoration: none;
 }
 
 .resultTable,
@@ -114,3 +86,32 @@ h4 {
   color: white;
   font-family: 'Courier New', Courier, monospace;
 }
+
+/****************************************************************/
+/* Begin section of classes customized for Visual Test Composer */
+/****************************************************************/
+
+#jsonEditor,
+#testJSEditor {
+  height: 70vh;
+  position: relative;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  font-size: 1em;
+}
+
+.custom-smaller-input-box {
+  padding: 0rem .5rem;
+  font-size: 0.8rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  min-height: .7rem
+}
+
+.custom-container {
+  height: 70vh;
+  overflow-y:auto;
+}
+
+
