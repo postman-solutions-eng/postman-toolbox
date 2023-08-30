@@ -130,13 +130,14 @@ function generateTestForm(obj, path) {
       generateTestForm(value, !path ? key : path + key)
     }
     else if (_.isString(value)) {
-        testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', enabled: true, propertyValue: value});
+      testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'string', enabled: true, propertyValue: value});
     }
-    //might need to eventually add clauses for all Javascript primitives.   remaining ones to be accounted for are Null, bool, undefined, Symbol, and Number.
+    else if (_.isBoolean(value)) {
+      testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.be', type: 'bool', enabled: true, propertyValue: value});
+    }
+    //might need to eventually add clauses for all Javascript primitives.   remaining ones to be accounted for are Null, undefined, Symbol, and Number.
     //for the time being I can't think of a reason to need to account for these individually, so we catch them all in this else statement.  It was originally
     //authored to address the _.isNumber usecase, but realized afterwards that this case applies to all the remaining primitives.
-
-    //todo: ACCOUNT FOR BOOL CASE
     else {
       testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'other', enabled: true, propertyValue: value});
     }
@@ -151,7 +152,14 @@ function generateChaiAssertions () {
         return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
       }
       if (formEntry.type === 'string') {
-        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\n});';
+        //check if we are just looking for the value to be present
+        if(_.includes(['.to.exist','.to.not.exist'], formEntry.condition)) {
+          return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
+        }
+        //otherwise check the value
+        else {
+          return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\n});';
+        }
       }
       if (formEntry.type === 'other') {
         return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\n});';
@@ -282,6 +290,8 @@ Handlebars.registerPartial('list', "\
           <option value = '.to.be.at.least'>&gt;=</option>\
           <option value = '.to.be.below'>&lt;</option>\
           <option value = '.to.be.at.most'>&lt;=</option>\
+          <option value = '.to.exist'>Exists</option>\
+          <option value = '.to.not.exist'>!Exists</option>\
         {{else}}\
           <option value = '.to.exist'>Exists</option>\
           <option value = '.to.not.exist'>!Exists</option>\
