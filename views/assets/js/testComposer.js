@@ -304,14 +304,70 @@ Handlebars.registerPartial('list', "\
   </div>\
   {{#each items}}\
     <div class='row'>\
-      <div class='col-5 ps-0'>\
+      <div class='col-1 ps-0'>\
+        <div class='btn-group'>\
+          {{#conditionalRender type 'number'}}\
+          <button type='button' class='btn btn-sm btn-outline-primary custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+            n\
+          {{/conditionalRender}}\
+          {{#conditionalRender type 'string'}}\
+          <button type='button' class='btn btn-sm btn-outline-success custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+            s\
+          {{/conditionalRender}}\
+          {{#conditionalRender type 'bool'}}\
+          <button type='button' class='btn btn-sm btn-outline-info custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+            b\
+          {{/conditionalRender}}\
+          {{#conditionalRender type 'null'}}\
+          <button type='button' class='btn btn-sm btn-outline-warning custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+            n\
+          {{/conditionalRender}}\
+          {{#conditionalRender type 'object'}}\
+          <button type='button' class='btn btn-sm btn-outline-danger custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+            o\
+          {{/conditionalRender}}\
+          </button>\
+          <ul class='dropdown-menu'>\
+            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>Number</button></li>\
+            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>String</button></li>\
+            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>Bool</button></li>\
+            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>Null</button></li>\
+            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>Object/Array</button></li>\
+          </ul>\
+        </div>\
+      </div>\
+      <div class='col-4 ps-0'>\
         <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyName}}'>\
           <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyName{{@index}}' value='{{propertyName}}' disabled=true>\
         </div>\
       </div>\
       <div class='col-3 ps-0'>\
         <select class='form-select form-select-sm custom-smaller-textbox ps-1' id='conditionSelect{{@index}}'>\
-        {{#if formValueFieldEnabled}}\
+        {{#conditionalRender type 'object'}}\
+          <option value = '.to.exist'>Exists</option>\
+          <option value = '.to.not.exist'>!Exists</option>\
+        {{/conditionalRender}}\
+        {{#conditionalRender type 'string'}}\
+          <option value = '.to.equal'>=</option>\
+          <option value = '.to.not.equal'>!=</option>\
+          <option value = '.to.contain'>Contains</option>\
+          <option value = '.to.not.contain'>!Contains</option>\
+          <option value = '.to.exist'>Exists</option>\
+          <option value = '.to.not.exist'>!Exists</option>\
+        {{/conditionalRender}}\
+        {{#conditionalRender type 'bool'}}\
+          <option value = '.to.be.true'>isTrue</option>\
+          <option value = '.to.be.false'>isFalse</option>\
+          <option value = '.to.exist'>Exists</option>\
+          <option value = '.to.not.exist'>!Exists</option>\
+        {{/conditionalRender}}\
+        \{{#conditionalRender type 'null'}}\
+          <option value = '.to.be.null'>isNull</option>\
+          <option value = '.to.not.be.null'>isNotNull</option>\
+          <option value = '.to.exist'>Exists</option>\
+          <option value = '.to.not.exist'>!Exists</option>\
+        {{/conditionalRender}}\
+        {{#conditionalRender type 'number'}}\
           <option value = '.to.equal'>=</option>\
           <option value = '.to.not.equal'>!=</option>\
           <option value = '.to.be.above'>&gt;</option>\
@@ -320,20 +376,17 @@ Handlebars.registerPartial('list', "\
           <option value = '.to.be.at.most'>&lt;=</option>\
           <option value = '.to.exist'>Exists</option>\
           <option value = '.to.not.exist'>!Exists</option>\
-        {{else}}\
-          <option value = '.to.exist'>Exists</option>\
-          <option value = '.to.not.exist'>!Exists</option>\
-        {{/if}}\
+        {{/conditionalRender}}\
         </select>\
       </div>\
       <div class='col-3 ps-0'>\
-      {{#if formValueFieldEnabled}}\
+      {{#conditionalRender type 'number' 'string'}}\
         <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyValue}}'>\
           <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyValue{{@index}}' value='{{propertyValue}}'>\
         </div>\
       {{else}}\
         <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyValue{{@index}}' value='N/A' disabled=true>\
-      {{/if}}\
+      {{/conditionalRender}}\
       </div>\
       <div class='col-1 ps-0'>\
         <div class='form-check form-switch'>\
