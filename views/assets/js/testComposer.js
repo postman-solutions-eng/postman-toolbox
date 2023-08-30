@@ -18,7 +18,8 @@ function handleJSONInput() {
     return
   }
 
-  //temporarily remove event handler so we can modify the json (aka beautify it) without reinvoking this function
+  //temporarily remove event handler that invokes handleJSONInput() (aka the function we are in right now)
+  // on any change to the json payload so we can modify the json (aka beautify it) without reinvoking this function
   //and causing an infinite loop
   jsonEditor.getSession().off('change', debouncedHandleJSONInput)
   //beautify input
@@ -46,10 +47,15 @@ function handleJSONInput() {
     //create tooltips on elements where the property length is longer than the textbox displaying it
     registerTooltips()
 
+    //add event handlers to the form fields.  These will reinvoke the generation of the chai assertions on any change to the form:
+
+    //add event handlers to the dropdown menus for the condition field
     conditionSelect.addEventListener('input', event => {
       testFormData[index].condition = conditionSelect.options[conditionSelect.selectedIndex].value;
       debouncedGenerateChaiAssertions();
     })
+
+    //add event handlers to the value textbox
     propertyValueTextBox.addEventListener('input', event => {
       testFormData[index].propertyValue = propertyValueTextBox.value;
       debouncedGenerateChaiAssertions();
@@ -57,6 +63,8 @@ function handleJSONInput() {
       propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
       debouncedRegisterTooltip('propertyValue' + index);
     })
+
+    //add event handlers to the enabled/disabled slider
     enabledSlider.addEventListener('click', event => {
       if (enabledSlider.checked) {
         testFormData[index].enabled = true;
@@ -75,22 +83,22 @@ function handleJSONInput() {
 function generateTestForm(obj, path) {
   _.each(obj, function (value, key) {
     // Javascript allows you to index to entries in javascript objects and arrays (where the keys are explicitly strings or
-    // integers respectively - note: technically a Javascript object can have keys that ARE NOT strings (symbols), but for the purposes
-    // of a javascript object created from parsing a JSON object, all keys will be strings) using bracket notation
-    // where the key is passed in EITHER as a number or a string.
-    // e.g:
+    // integers respectively) using bracket notation where the key is passed in EITHER as a number or a string
+    // For example:
     // in the below object, both testObject[10] and testObject["10"] will return "the key for this value is 10" despite the fact that the
-    // key is technically a string.
-    //
+    // key is technically a string and (in theory anyway) only testObject["10"] should work.
     //  let testObject = {
     //      "name": "Grey",
     //      "10": "the key for this value is 10"
     //  }
+    //  Note: technically a Javascript object can have keys that ARE NOT strings (symbols), but for the purposes
+    //  of a javascript object created from parsing a JSON object, all keys will be strings
     //
     //  Arrays function the same... myArray[10] and myArray["10"] will both return the value at index 10.
+    //
     //  However, coding conventions dictate that generally you index to properties of an object
     //  using dot notation, or bracket notation with a string value passed in... depending on whether the key/index to the value
-    //  is a valid identifier or not.  (e.g. testObject.name = "grey"   or testObject["10"] = "the key for this value is 10").
+    //  is a so-called valid identifier or not.  (e.g. testObject.name = "grey"   or testObject["10"] = "the key for this value is 10").
     //  With arrays, you must index using bracket notation as all keys are numbers (and therefore not valid identifers,
     //  so bracket notation becomes a requirement).  By convention, this number is passed in as number, and not a string
     //  e.g. myArray[10] is generally used, not myArray["10"].
@@ -127,6 +135,8 @@ function generateTestForm(obj, path) {
     //might need to eventually add clauses for all Javascript primitives.   remaining ones to be accounted for are Null, bool, undefined, Symbol, and Number.
     //for the time being I can't think of a reason to need to account for these individually, so we catch them all in this else statement.  It was originally
     //authored to address the _.isNumber usecase, but realized afterwards that this case applies to all the remaining primitives.
+
+    //todo: ACCOUNT FOR BOOL CASE
     else {
       testFormData.push({propertyName: !path ? key : path + key, formValueFieldEnabled: true, condition: '.to.equal', type: 'other', enabled: true, propertyValue: value});
     }
@@ -155,15 +165,15 @@ function generateChaiAssertions () {
 //this function recreates tooltips for all elements that require it.   Intended to be
 //executed on window resize and on loading new json
 function registerTooltips () {
-  //cleanly destroy tooltips
+  //cleanly destroy existing tooltips
   _.each(tooltips, function(tooltip) {
     tooltip.dispose()
   })
 
   tooltips = {}
 
+  //create new tooltips (where applicable)
   _.forEach(testFormData, function (formEntry, index) {
-    //create tooltips (where applicable)
     registerTooltip('propertyValue' + index)
     registerTooltip('propertyName' + index)
   })
@@ -189,11 +199,12 @@ function registerTooltip(id) {
   }
 }
 
+
 //////////////////////////////////////
 // Initialization and Setup Section //
 //////////////////////////////////////
 
-//Initialize/Config Editors
+//Initialize/Config ACE Editors
 ace.require('ace/ext/language_tools')
 let jsonEditor = ace.edit('jsonEditor')
 jsonEditor.setTheme('ace/theme/monokai')
@@ -223,41 +234,23 @@ let debouncedGenerateChaiAssertions = debounceAFunction(generateChaiAssertions, 
 let debouncedRegisterTooltips = debounceAFunction(registerTooltips, 300)
 let debouncedRegisterTooltip = debounceAFunction(registerTooltip, 300)
 
-//Register Event Listeners for JSON Editor
-jsonEditor.getSession().on('change', debouncedHandleJSONInput)
-
-//invoke  handleJSONinput on document load
-document.addEventListener('DOMContentLoaded', function() {
-  handleJSONInput()
-});
-
-//watch for resizes of the testForm, so that we can recalculate tooltips
+//watch for resizes of the testForm (will only happen on a resize of the browser window), so that we can recalculate tooltips
 let elementToObserve = document.getElementById('testFormContainer');
 let resizeObserver = new ResizeObserver(debouncedRegisterTooltips);
 resizeObserver.observe(elementToObserve);
 
-//function to test keys in JSON object so we can know if out chai assertions can reference them via . notation, or we
-//must resort to [] notation.  JS documentation says that . notation must use valid identifiers the characteristics of which
-//are comprehended in this regex.
-function isValidIdentifier(key) {
-  let identifierRegex = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
-  return identifierRegex.test(key);
-}
+//Register Event Listeners for JSONEditor so that we can regenerate the testform
+jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
-//Debouncer
-function debounceAFunction(functionToDebounce, delay) {
-  let timeoutId;
-  return function (...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      functionToDebounce(...args);
-    }, delay);
-  };
-}
+//invoke handleJSONinput on document load
+document.addEventListener('DOMContentLoaded', function() {
+  handleJSONInput()
+});
 
-//change left panel button styles
+//change left panel button styles to indicate active page
 document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
 
+//Register partial template for use in dynamically generated form
 Handlebars.registerPartial('list', "\
   <div class='row'>\
     <div class='col-5 ps-0' style='font-size: 0.8rem;'>\
@@ -312,3 +305,26 @@ Handlebars.registerPartial('list', "\
     </div>\
   {{/each}}\
 ")
+
+//////////////////////////////
+// Utility Function Section //
+//////////////////////////////
+
+//function to test keys in JSON object so we can know if out chai assertions can reference them via . notation, or we
+//must resort to [] notation.  JS documentation says that . notation must use valid identifiers the characteristics of which
+//are comprehended in this regex.
+function isValidIdentifier(key) {
+  let identifierRegex = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+  return identifierRegex.test(key);
+}
+
+//Debouncer
+function debounceAFunction(functionToDebounce, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      functionToDebounce(...args);
+    }, delay);
+  };
+}
