@@ -3,9 +3,11 @@ let testFormData = [];
 let tooltips = {};
 let currentJSON = {};
 
+//todo: add isnull as testtype
+
 // This function is the initial entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
-// this function populates the data structure upon which this entire page is reliant (testFormData array), generates the test
-// composition form, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
+// this function populates the data structure upon which this entire page is reliant (testFormData array), generates the initial state of the
+// test composition form, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
 // of the chai assertions.
 function handleJSONInput() {
   //reset testFormData field in case user uses this tool multiple times in a row
@@ -19,7 +21,7 @@ function handleJSONInput() {
   }
 
   //temporarily remove event handler that invokes handleJSONInput() (aka the function we are in right now)
-  // on any change to the json payload so we can modify the json (aka beautify it) without reinvoking this function
+  //on any change to the json payload, so we can modify the json (aka beautify it) without reinvoking this function
   //and causing an infinite loop
   jsonEditor.getSession().off('change', debouncedHandleJSONInput)
   //beautify input
@@ -30,27 +32,98 @@ function handleJSONInput() {
   //restore event handler
   jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
-  generateTestForm(currentJSON)
+  generateTestForm(currentJSON);
 
-  //load template
-  let template = Handlebars.compile("{{> list}}")
   //render template
-  document.getElementById('testFormContainer').innerHTML = template({items: testFormData});
+  document.getElementById('testFormContainer').innerHTML = mainTemplate({items: testFormData});
 
   //register listeners for each input field
   _.forEach(testFormData, function(formEntry, index) {
 
+    let typeSelect = document.getElementById('typeSelect' + index)
+    let typeSelectOptions = document.getElementById('typeSelect' + index + 'Options').children;
     let conditionSelect = document.getElementById('conditionSelect' + index)
     let propertyValueTextBox = document.getElementById('propertyValue' + index)
     let enabledSlider = document.getElementById('enabledSlider' + index)
-    let typeSelect = document.getElementById('typeSelect' + index)
 
-    //create tooltips on elements where the property length is longer than the textbox displaying it
-    registerTooltips()
     //add event handlers to the form fields.  These will reinvoke the generation of the chai assertions on any change to the form:
+    //add event handlers to the type select.  This select is not a true select, but rather using bootstrap's dropdown classes, so
+    //every option in this "pseudo-select" is its own unique button on which we must setup event listeners.  I did it this way
+    //to take advantage of better formatting/styles available on buttons than on selects.
+    _.each(typeSelectOptions, function(option) {
+      option.addEventListener('click', event => {
+        let buttonColorClass = _.filter(typeSelect.classList, function(singleClass) {
+          return _.includes(singleClass, 'btn-outline-');
+        })
+        if (buttonColorClass.length > 1) {throw 'expecting only single class'}
+        else {
+          buttonColorClass = buttonColorClass[0]
+        }
 
+        if (formEntry.type === 'string' || formEntry.type === 'number') {
+          formEntry['old' + formEntry.type + 'Value'] = propertyValueTextBox.value;
+        }
+
+        switch (option.innerHTML) {
+          case 'Number':
+            //todo: re-register tooltip
+            //todo: remember previously selected condition and restore it
+            typeSelect.innerHTML = ' n ';
+            typeSelect.classList.replace(buttonColorClass, 'btn-outline-primary');
+            formEntry.type = 'number';
+            formEntry.condition = '.to.equal'
+            conditionSelect.innerHTML=numberConditionOptions();
+            if (formEntry.oldnumberValue) {
+              propertyValueTextBox.value = formEntry.oldnumberValue
+            }
+            else {
+              formEntry.propertyValue = 123
+              propertyValueTextBox.value = 123;
+            }
+            propertyValueTextBox.removeAttribute('disabled');
+            debouncedGenerateChaiAssertions();
+            break;
+          case 'String':
+            typeSelect.innerHTML = ' s ';
+            typeSelect.classList.replace(buttonColorClass, 'btn-outline-success');
+            formEntry.type = 'string';
+            formEntry.condition = '.to.equal'
+            conditionSelect.innerHTML=stringConditionOptions();
+            if (formEntry.oldstringValue) {
+              propertyValueTextBox.value = formEntry.oldstringValue
+            }
+            else {
+              formEntry.propertyValue = 'sample string'
+              propertyValueTextBox.value = 'sample string';
+            }
+            propertyValueTextBox.removeAttribute('disabled')
+            debouncedGenerateChaiAssertions();
+            break;
+          case 'Bool':
+            typeSelect.innerHTML = ' b ';
+            typeSelect.classList.replace(buttonColorClass, 'btn-outline-info')
+            formEntry.type = 'bool';
+            formEntry.condition = '.to.be.true'
+            conditionSelect.innerHTML=boolConditionOptions();
+            propertyValueTextBox.value = 'N/A';
+            propertyValueTextBox.setAttribute('disabled', 'true')
+            debouncedGenerateChaiAssertions();
+            break;
+          case 'Object/Array':
+            typeSelect.innerHTML = ' o ';
+            typeSelect.classList.replace(buttonColorClass, 'btn-outline-danger')
+            formEntry.type = 'object';
+            formEntry.condition = '.to.exist'
+            conditionSelect.innerHTML=objectConditionOptions();
+            propertyValueTextBox.value = 'N/A';
+            propertyValueTextBox.setAttribute('disabled', 'true')
+            debouncedGenerateChaiAssertions();
+            break;
+        }
+      })
+    })
     //add event handlers to the dropdown menus for the condition field
-    conditionSelect.addEventListener('input', event => {
+    conditionSelect.addEventListener('change', event => {
       let selectedValue = conditionSelect.options[conditionSelect.selectedIndex].value;
 
       testFormData[index].condition = selectedValue;
@@ -64,7 +137,7 @@ function handleJSONInput() {
         propertyValueTextBox.value = 'N/A';
         propertyValueTextBox.setAttribute('disabled', true)
       }
-      //if they select the some other than !exist or exists operators, then enab;e  value input box, and restore
+      //if they select the some other than !exist or exists operators, then enable  value input box, and restore
       //the old value if there was one
       else {
         propertyValueTextBox.removeAttribute('disabled')
@@ -96,14 +169,17 @@ function handleJSONInput() {
     })
 
   })
+  //create tooltips on elements where the value length is longer than the textbox displaying it
+  registerTooltips()
   //generate initial set of assertions for current JSON
   generateChaiAssertions()
 }
 
-//recursive function that generates form entries based on the JSON payload provided by the user
+//recursive function that generates the initial state of the form based on the JSON payload provided by the user.  This
+//function is intended to be run only when the JSON input is changed.
 function generateTestForm(obj, path) {
   _.each(obj, function (value, key) {
-    // Javascript allows you to index to entries in javascript objects and arrays (where the keys are explicitly strings or
+    // Javascript allows you to index to entries in both javascript objects and arrays (where the keys are explicitly strings or
     // integers respectively) using bracket notation where the key is passed in EITHER as a number or a string
     // For example:
     // in the below object, both testObject[10] and testObject["10"] will return "the key for this value is 10" despite the fact that the
@@ -161,7 +237,7 @@ function generateTestForm(obj, path) {
   });
 }
 
-//generate chai assertions based on data in the form
+//generate chai assertions based on data in the form.  Generally this should not be called directly, but instead the debounced version should be called
 function generateChaiAssertions () {
   let chaiAssertions = _.map(testFormData, function (formEntry) {
     if (formEntry.enabled === true) {
@@ -261,13 +337,12 @@ resizeObserver.observe(elementToObserve);
 //Register Event Listeners for JSONEditor so that we can regenerate the testform
 jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
-//invoke handleJSONinput on document load
+//invoke initial functionality once the page loads
 document.addEventListener('DOMContentLoaded', function() {
   handleJSONInput()
+  //change left panel button styles to indicate active page
+  document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
 });
-
-//change left panel button styles to indicate active page
-document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
 
 Handlebars.registerHelper('conditionalRender', function(...args) {
   //first parameter is the value we are checking
@@ -285,17 +360,59 @@ Handlebars.registerHelper('conditionalRender', function(...args) {
   }
 });
 
-//This partial is responsible for rendering the initial state of the form upon a call to handleJSONInput().   Subsequent
+
+//Register several partials so that they can be referenced in other templates.  Similarly, compile them so they
+//can be invoked/called from JS code.
+Handlebars.registerPartial('numberConditionOptions', "\
+  <option selected value = '.to.equal'>=</option>\
+  <option value = '.to.not.equal'>!=</option>\
+  <option value = '.to.be.above'>&gt;</option>\
+  <option value = '.to.be.at.least'>&gt;=</option>\
+  <option value = '.to.be.below'>&lt;</option>\
+  <option value = '.to.be.at.most'>&lt;=</option>\
+  <option value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+let numberConditionOptions = Handlebars.compile("{{> numberConditionOptions}}");
+
+Handlebars.registerPartial('stringConditionOptions', "\
+  <option selected value = '.to.equal'>=</option>\
+  <option value = '.to.not.equal'>!=</option>\
+  <option value = '.to.contain'>Contains</option>\
+  <option value = '.to.not.contain'>!Contains</option>\
+  <option value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+let stringConditionOptions = Handlebars.compile("{{> stringConditionOptions}}");
+
+Handlebars.registerPartial('boolConditionOptions', "\
+  <option selected value = '.to.be.true'>isTrue</option>\
+  <option value = '.to.be.false'>isFalse</option>\
+  <option value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+let boolConditionOptions = Handlebars.compile("{{> boolConditionOptions}}");
+
+Handlebars.registerPartial('objectConditionOptions', "\
+  <option selected value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+let objectConditionOptions = Handlebars.compile("{{> objectConditionOptions}}");
+
+//This template is responsible for rendering the initial state of the form upon a call to handleJSONInput().   Subsequent
 //changes to the form (by manipulating the input fields) are handled by eventlisteners created in the handleJSONInput() function
-Handlebars.registerPartial('list', "\
-  <div class='row'>\
-    <div class='col-5 ps-0' style='font-size: 0.8rem;'>\
+let mainTemplate = Handlebars.compile("\
+  <div class='row mb-2'>\
+    <div class='col-1 ps-0' style='font-size: 0.8rem;'>\
+      Type\
+    </div>\
+    <div class='col-4 ps-0' style='font-size: 0.8rem;'>\
       Property Name\
     </div>\
-    <div class='col-3 ps-0' style='font-size: 0.8rem;'>\
+    <div class='col-2 ps-0' style='font-size: 0.8rem;'>\
       Condition\
     </div>\
-    <div class='col-3 ps-0' style='font-size: 0.8rem;'>\
+    <div class='col-4 ps-0' style='font-size: 0.8rem;'>\
       Value\
     </div>\
     <div class='col-1 ps-0' style='font-size: 0.8rem;'>\
@@ -303,95 +420,80 @@ Handlebars.registerPartial('list', "\
     </div>\
   </div>\
   {{#each items}}\
-    <div class='row'>\
-      <div class='col-5 ps-0 input-group'>\
-          {{#conditionalRender type 'number'}}\
-          <button type='button' class='btn btn-sm btn-outline-primary custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
-            n\
-          {{/conditionalRender}}\
-          {{#conditionalRender type 'string'}}\
-          <button type='button' class='btn btn-sm btn-outline-success custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
-            s\
-          {{/conditionalRender}}\
-          {{#conditionalRender type 'bool'}}\
-          <button type='button' class='btn btn-sm btn-outline-info custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
-            b\
-          {{/conditionalRender}}\
-          {{#conditionalRender type 'null'}}\
-          <button type='button' class='btn btn-sm btn-outline-warning custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
-            n\
-          {{/conditionalRender}}\
-          {{#conditionalRender type 'object'}}\
-          <button type='button' class='btn btn-sm btn-outline-danger custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
-            o\
-          {{/conditionalRender}}\
-          </button>\
-          <ul class='dropdown-menu'>\
-            <li><button class='dropdown-item' type='button'>Number</button></li>\
-            <li><button class='dropdown-item' type='button'>String</button></li>\
-            <li><button class='dropdown-item' type='button'>Bool</button></li>\
-            <li><button class='dropdown-item' type='button'>Object/Array</button></li>\
-          </ul>\
-        <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyName}}'>\
-          <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyName{{@index}}' value='{{propertyName}}' disabled=true>\
-        </div>\
-      </div>\
-      <div class='col-3 ps-0'>\
-        <select class='form-select form-select-sm custom-smaller-textbox ps-1' id='conditionSelect{{@index}}'>\
-        {{#conditionalRender type 'object'}}\
-          <option value = '.to.exist'>Exists</option>\
-          <option value = '.to.not.exist'>!Exists</option>\
+    <div class='row mb-1'>\
+      <div class='col-1 ps-0 pe-0'>\
+        {{#conditionalRender type 'number'}}\
+        <button type='button' class='btn btn-sm btn-outline-primary custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+          n\
         {{/conditionalRender}}\
         {{#conditionalRender type 'string'}}\
-          <option value = '.to.equal'>=</option>\
-          <option value = '.to.not.equal'>!=</option>\
-          <option value = '.to.contain'>Contains</option>\
-          <option value = '.to.not.contain'>!Contains</option>\
-          <option value = '.to.exist'>Exists</option>\
-          <option value = '.to.not.exist'>!Exists</option>\
+        <button type='button' class='btn btn-sm btn-outline-success custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+          s\
         {{/conditionalRender}}\
         {{#conditionalRender type 'bool'}}\
-          <option value = '.to.be.true'>isTrue</option>\
-          <option value = '.to.be.false'>isFalse</option>\
-          <option value = '.to.exist'>Exists</option>\
-          <option value = '.to.not.exist'>!Exists</option>\
+        <button type='button' class='btn btn-sm btn-outline-info custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+          b\
         {{/conditionalRender}}\
-        \{{#conditionalRender type 'null'}}\
+        {{#conditionalRender type 'null'}}\
+        <button type='button' class='btn btn-sm btn-outline-warning custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+          n\
+        {{/conditionalRender}}\
+        {{#conditionalRender type 'object'}}\
+        <button type='button' class='btn btn-sm btn-outline-danger custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
+          o\
+        {{/conditionalRender}}\
+        </button>\
+        <ul class='dropdown-menu pt-0 pb-0' id='typeSelect{{@index}}Options'>\
+          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Number'>Number</button>\
+          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-String'>String</button>\
+          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Bool'>Bool</button>\
+          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Object'>Object/Array</button>\
+        </ul>\
+      </div>\
+      <div class='col-4 ps-0 pe-0'>\
+        <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyName}}'>\
+          <input type='text' class='form-control form-control-sm custom-form-styling ps-1 pe-1 rounded-0' id='propertyName{{@index}}' value='{{propertyName}}' disabled=true>\
+        </div>\
+      </div>\
+      <div class='col-2 ps-0 pe-0'>\
+        <select class='form-select form-select-sm custom-form-styling ps-1 pe-1 rounded-0' id='conditionSelect{{@index}}'>\
+        {{#conditionalRender type 'object'}}\
+          {{> objectConditionOptions}}\
+        {{/conditionalRender}}\
+        {{#conditionalRender type 'string'}}\
+          {{> stringConditionOptions}}\
+        {{/conditionalRender}}\
+        {{#conditionalRender type 'bool'}}\
+          {{> boolConditionOptions}}\
+        {{/conditionalRender}}\
+        {{#conditionalRender type 'null'}}\
           <option value = '.to.be.null'>isNull</option>\
           <option value = '.to.not.be.null'>isNotNull</option>\
           <option value = '.to.exist'>Exists</option>\
           <option value = '.to.not.exist'>!Exists</option>\
         {{/conditionalRender}}\
         {{#conditionalRender type 'number'}}\
-          <option value = '.to.equal'>=</option>\
-          <option value = '.to.not.equal'>!=</option>\
-          <option value = '.to.be.above'>&gt;</option>\
-          <option value = '.to.be.at.least'>&gt;=</option>\
-          <option value = '.to.be.below'>&lt;</option>\
-          <option value = '.to.be.at.most'>&lt;=</option>\
-          <option value = '.to.exist'>Exists</option>\
-          <option value = '.to.not.exist'>!Exists</option>\
+          {{> numberConditionOptions}}\
         {{/conditionalRender}}\
         </select>\
       </div>\
-      <div class='col-3 ps-0'>\
+      <div class='col-4 ps-0'>\
       {{#conditionalRender type 'number' 'string'}}\
         <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyValue}}'>\
-          <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyValue{{@index}}' value='{{propertyValue}}'>\
+          <input type='text' class='form-control form-control-sm custom-form-styling ps-1 rounded-0 rounded-end' id='propertyValue{{@index}}' value='{{propertyValue}}'>\
         </div>\
       {{else}}\
-        <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyValue{{@index}}' value='N/A' disabled=true>\
+        <input type='text' class='form-control form-control-sm custom-form-styling ps-1 rounded-0 rounded-end' id='propertyValue{{@index}}' value='N/A' disabled=true>\
       {{/conditionalRender}}\
       </div>\
       <div class='col-1 ps-0'>\
-        <div class='form-check form-switch'>\
+        <div class='form-switch'>\
           <input class='form-check-input' type='checkbox' id='enabledSlider{{@index}}' checked>\
         </div>\
       </div>\
     </div>\
   {{/each}}\
-")
-
+");
 
 
 //////////////////////////////

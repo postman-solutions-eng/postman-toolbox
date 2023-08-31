@@ -102,11 +102,12 @@ h4 {
   font-size: 1em;
 }
 
-.custom-smaller-input-box {
+.custom-form-styling {
   padding: 0rem .5rem;
   font-size: 0.8rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-  min-height: .7rem
+  min-height: .7rem;
+  min-width: 100%
 }
 
 .custom-container {
@@ -115,12 +116,6 @@ h4 {
 }
 
 .custom-btn {
-  margin-bottom: 1;
+  margin-bottom: 0;
   font-family: 'Courier New', Courier, monospace;
-  width: 42px
 }
-.input-group {
-  width: unset
-}
-
-
