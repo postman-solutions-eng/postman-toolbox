@@ -288,7 +288,7 @@ function registerTooltip(id) {
   // the parent div is the element to which we actually assign the tooltip due to disabled elements being non-interactive
   // and therefore "untooltip-able" (according to tooltip/bootstrap documentation).   In our case the Property/PropertyName
   // textbox is disabled to prevent user input, and rather than implement logic to selectively define if we put the tooltip
-  // on the textbox or on the containing element, I just decided to ALWAYS put it on the containing element
+  // on the textbox or on the containing element, I just decided to ALWAYS put it on the containing/parent element
   let parentElement = elementThatNeedsToolTip.parentNode;
   //check if node actually needs a tooltip
   if (elementThatNeedsToolTip.scrollWidth > elementThatNeedsToolTip.offsetWidth) {
