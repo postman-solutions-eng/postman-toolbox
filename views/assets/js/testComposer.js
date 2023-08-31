@@ -61,7 +61,7 @@ function handleJSONInput() {
         }
 
         if (formEntry.type === 'string' || formEntry.type === 'number') {
-          formEntry['old' + formEntry.type + 'Value'] = propertyValueTextBox.value;
+          formEntry['old' + formEntry.type + 'PropertyValue'] = propertyValueTextBox.value;
         }
 
         switch (option.innerHTML) {
@@ -73,12 +73,13 @@ function handleJSONInput() {
             formEntry.type = 'number';
             formEntry.condition = '.to.equal'
             conditionSelect.innerHTML=numberConditionOptions();
-            if (formEntry.oldnumberValue) {
-              propertyValueTextBox.value = formEntry.oldnumberValue
+            if (formEntry.oldnumberPropertyValue) {
+              propertyValueTextBox.value = formEntry.oldnumberPropertyValue
+              formEntry.propertyValue = formEntry.oldnumberPropertyValue
             }
             else {
-              formEntry.propertyValue = 123
-              propertyValueTextBox.value = 123;
+              formEntry.propertyValue = 12345
+              propertyValueTextBox.value = 12345;
             }
             propertyValueTextBox.removeAttribute('disabled');
             debouncedGenerateChaiAssertions();
@@ -89,8 +90,9 @@ function handleJSONInput() {
             formEntry.type = 'string';
             formEntry.condition = '.to.equal'
             conditionSelect.innerHTML=stringConditionOptions();
-            if (formEntry.oldstringValue) {
-              propertyValueTextBox.value = formEntry.oldstringValue
+            if (formEntry.oldstringPropertyValue) {
+              propertyValueTextBox.value = formEntry.oldstringPropertyValue
+              formEntry.propertyValue = formEntry.oldstringPropertyValue
             }
             else {
               formEntry.propertyValue = 'sample string'
