@@ -289,10 +289,7 @@ Handlebars.registerHelper('conditionalRender', function(...args) {
 //changes to the form (by manipulating the input fields) are handled by eventlisteners created in the handleJSONInput() function
 Handlebars.registerPartial('list', "\
   <div class='row'>\
-    <div class='col-1 ps-0' style='font-size: 0.8rem;'>\
-      Type\
-    </div>\
-    <div class='col-4 ps-0' style='font-size: 0.8rem;'>\
+    <div class='col-5 ps-0' style='font-size: 0.8rem;'>\
       Property Name\
     </div>\
     <div class='col-3 ps-0' style='font-size: 0.8rem;'>\
@@ -307,8 +304,7 @@ Handlebars.registerPartial('list', "\
   </div>\
   {{#each items}}\
     <div class='row'>\
-      <div class='col-1 ps-0'>\
-        <div class='btn-group'>\
+      <div class='col-5 ps-0 input-group'>\
           {{#conditionalRender type 'number'}}\
           <button type='button' class='btn btn-sm btn-outline-primary custom-btn dropdown-toggle' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
             n\
@@ -331,15 +327,11 @@ Handlebars.registerPartial('list', "\
           {{/conditionalRender}}\
           </button>\
           <ul class='dropdown-menu'>\
-            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>Number</button></li>\
-            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>String</button></li>\
-            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>Bool</button></li>\
-            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>Null</button></li>\
-            <li><button class='dropdown-item btn btn-sm btn-primary custom-btn'>Object/Array</button></li>\
+            <li><button class='dropdown-item' type='button'>Number</button></li>\
+            <li><button class='dropdown-item' type='button'>String</button></li>\
+            <li><button class='dropdown-item' type='button'>Bool</button></li>\
+            <li><button class='dropdown-item' type='button'>Object/Array</button></li>\
           </ul>\
-        </div>\
-      </div>\
-      <div class='col-4 ps-0'>\
         <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyName}}'>\
           <input type='text' class='form-control form-control-sm custom-smaller-textbox ps-1' id='propertyName{{@index}}' value='{{propertyName}}' disabled=true>\
         </div>\
