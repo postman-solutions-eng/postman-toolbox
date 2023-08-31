@@ -297,9 +297,9 @@ function registerTooltip(id) {
 }
 
 
-//////////////////////////////////////
-// Initialization and Setup Section //
-//////////////////////////////////////
+///////////////////////////////////////////
+// Initialization - Setup/Config Section //
+///////////////////////////////////////////
 
 //Initialize/Config ACE Editors
 ace.require('ace/ext/language_tools')
@@ -362,6 +362,9 @@ Handlebars.registerHelper('conditionalRender', function(...args) {
   }
 });
 
+////////////////////////////////////////
+// Initialization - Templates Section //
+////////////////////////////////////////
 
 //Register several partials so that they can be referenced in other templates.  Similarly, compile them so they
 //can be invoked/called from JS code.
