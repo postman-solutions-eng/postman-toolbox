@@ -2,11 +2,6 @@
 let testFormData = [];
 let tooltips = {};
 
-
-
-//todo: add isnull as testtype
-//todo: move currentJSON into function since its not used anywhere else
-
 // This function is the initial entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
 // this function populates the data structure upon which this entire page is reliant (testFormData array), generates the initial state of the
 // test composition form, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
@@ -35,153 +30,86 @@ function handleJSONInput() {
   //restore event handler
   jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
+  //read the JSON and populate our data structure (testFormData) from which the form will be generated and from which
+  //the tests will be generated
   populateTestFormData(currentJSON);
 
   //render template
   document.getElementById('testFormContainer').innerHTML = mainTemplate({items: testFormData});
 
-  //todo: pull the logic that sets up event listeners into a separate function to make this more readable
-  //register listeners for each input field
+  //The following section adds eventlisteners to the various DOM elements that make up the form and additionally sets
+  //an initial tooltip on the text fields where the initial value is longer than the textbox containing it.
+  //Each one of the aforementioned event listeners manipulates the testFormData data structure
+  //and then relies on a call to renderFormEntry() to change the DOM elements to reflect the changes made to the
+  //datastructure
+
+  //for each testForm row/entry
   _.forEach(testFormData, function(formEntry, index) {
 
-    let typeSelect = document.getElementById('typeSelect' + index)
+    //locate the formEntry's DOM elements to which we need to add event listeners
     let typeSelectOptions = document.getElementById('typeSelect' + index + 'Options').children;
     let conditionSelect = document.getElementById('conditionSelect' + index)
     let propertyValueTextBox = document.getElementById('propertyValue' + index)
     let enabledSlider = document.getElementById('enabledSlider' + index)
 
-    //add event handlers to the form fields.  These will reinvoke the generation of the chai assertions on any change to the form:
-    //add event handlers to the type select.  This select is not a true select, but rather using bootstrap's dropdown classes, so
-    //every option in this "pseudo-select" is its own unique button on which we must setup event listeners.  I did it this way
-    //to take advantage of better formatting/styles available on buttons than on selects.
+    //ADD EVENT LISTENERS TO THE TYPESELECT.  This select is not a true select, but rather using bootstrap's dropdown classes.
+    //Consequently every option in this "pseudo-select" is its own unique bootstrap "button" on which we must setup event
+    //listeners.  I did it this way to take advantage of better formatting/styles available on buttons than on selects:
+
+    //for each button/option (i.e. bool, string, number, object/array)
     _.each(typeSelectOptions, function(option) {
+
+      //add a click listener and invoke the enclosed function
       option.addEventListener('click', event => {
-        let buttonColorClass = _.filter(typeSelect.classList, function(singleClass) {
-          return _.includes(singleClass, 'btn-outline-');
-        })
-        if (buttonColorClass.length > 1) {throw 'expecting only single class'}
+        //copy current form state so that it can be restored if user reverts back to the currently selected type (from type Select)
+        formEntry[formEntry.currentFormData.type + 'FormData'] = _.cloneDeep(formEntry.currentFormData)
+
+        //restore form state of newly selected type if a stored form state exists
+        if (formEntry[option.value + 'FormData']) {
+          formEntry.currentFormData = formEntry[option.value + 'FormData']
+        }
+        //otherwise populate the form with some default/catch-all values (with the exception of the property name, which
+        //needs to be maintained
         else {
-          buttonColorClass = buttonColorClass[0]
+          let propertyName = formEntry.currentFormData.propertyName
+          formEntry.currentFormData = _.cloneDeep(defaultFormData[option.value])
+          formEntry.currentFormData.propertyName = propertyName
         }
-
-        //remember value of propertyValueTextBox if applicable (i.e. if field was editable at the time aka if the formentry
-        //was of type string or number), so that we can restore it if the user navigates back to this type in the type select
-        if (formEntry.type === 'string' || formEntry.type === 'number') {
-          formEntry['old' + formEntry.type + 'PropertyValue'] = propertyValueTextBox.value;
-        }
-
-        //remember the selectedcondition, so that we can restore it if the user navigates back to this type in the type select
-        formEntry['old' + formEntry.type + 'ConditionSelectedIndex'] = conditionSelect.selectedIndex;
-
-        switch (option.innerHTML) {
-          case 'Number':
-            //todo: remember previously selected condition and restore it
-            typeSelect.innerHTML = ' n ';
-            typeSelect.classList.replace(buttonColorClass, 'btn-outline-primary');
-            formEntry.type = 'number';
-            conditionSelect.innerHTML=numberConditionOptions();
-            // if (formEntry.oldnumberConditionSelectedIndex) {
-            //   conditionSelect.selectedIndex = formEntry.oldnumberConditionSelectedIndex
-            //   formEntry.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
-            // }
-            // else {
-            //   conditionSelect.selectedIndex = 0;
-            //   formEntry.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
-            // }
-            if (formEntry.oldnumberPropertyValue) {
-              propertyValueTextBox.value = formEntry.oldnumberPropertyValue
-              formEntry.propertyValue = formEntry.oldnumberPropertyValue
-            }
-            else {
-              formEntry.propertyValue = 12345
-              propertyValueTextBox.value = 12345;
-            }
-            propertyValueTextBox.removeAttribute('disabled');
-            debouncedGenerateChaiAssertions();
-            break;
-          case 'String':
-            typeSelect.innerHTML = ' s ';
-            typeSelect.classList.replace(buttonColorClass, 'btn-outline-success');
-            formEntry.type = 'string';
-            formEntry.condition = '.to.equal'
-            conditionSelect.innerHTML=stringConditionOptions();
-            if (formEntry.oldstringPropertyValue) {
-              propertyValueTextBox.value = formEntry.oldstringPropertyValue
-              formEntry.propertyValue = formEntry.oldstringPropertyValue
-            }
-            else {
-              formEntry.propertyValue = 'sample string'
-              propertyValueTextBox.value = 'sample string';
-            }
-            propertyValueTextBox.removeAttribute('disabled')
-            debouncedGenerateChaiAssertions();
-            break;
-          case 'Bool':
-            typeSelect.innerHTML = ' b ';
-            typeSelect.classList.replace(buttonColorClass, 'btn-outline-info')
-            formEntry.type = 'bool';
-            formEntry.condition = '.to.be.true'
-            conditionSelect.innerHTML=boolConditionOptions();
-            propertyValueTextBox.value = 'N/A';
-            propertyValueTextBox.setAttribute('disabled', 'true')
-            debouncedGenerateChaiAssertions();
-            break;
-          case 'Object/Array':
-            typeSelect.innerHTML = ' o ';
-            typeSelect.classList.replace(buttonColorClass, 'btn-outline-danger')
-            formEntry.type = 'object';
-            formEntry.condition = '.to.exist'
-            conditionSelect.innerHTML=objectConditionOptions();
-            propertyValueTextBox.value = 'N/A';
-            propertyValueTextBox.setAttribute('disabled', 'true')
-            debouncedGenerateChaiAssertions();
-            break;
-        }
+        //render the new form data to the screen
+        renderFormEntry(index, formEntry)
+        //generate chai assertions based on current state
+        debouncedGenerateChaiAssertions();
       })
     })
-    //add event handlers to the dropdown menus for the condition field
+    //ADD EVENT LISTENERS TO THE CONDITION SELECT
     conditionSelect.addEventListener('change', event => {
-      let selectedValue = conditionSelect.options[conditionSelect.selectedIndex].value;
-
-      formEntry.condition = selectedValue;
-
-      //if they select any operators that don't accept a value, then disable the value input box, and store whatever was there
-      //for future restoration if they change the condition back to something that would expect a value
-      if (selectedValue === '.to.exist' || selectedValue === '.to.not.exist' || selectedValue === '.to.be.true' || selectedValue === '.to.be.false' || selectedValue === '.to.be.null' || selectedValue === '.to.not.be.null') {
-        if (!formEntry.oldValue) {
-          formEntry.oldValue = propertyValueTextBox.value;
-        }
-        propertyValueTextBox.value = 'N/A';
-        formEntry.propertyValue = 'N/A';
-        propertyValueTextBox.setAttribute('disabled', true)
-      }
-      //if they select the something other than !exist or exists operators, then enable  value input box, and restore
-      //the old value if there was one
-      else {
-        propertyValueTextBox.removeAttribute('disabled')
-        if (formEntry['old' + formEntry.type + 'PropertyValue']) {
-          propertyValueTextBox.value = formEntry['old' + formEntry.type + 'PropertyValue'];
-          formEntry.propertyValue = formEntry['old' + formEntry.type + 'PropertyValue'];
-        }
-      }
+      //update testformdata data structure with newly selected value
+      formEntry.currentFormData.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
+      //render the new form data to the screen
+      renderFormEntry(index, formEntry)
+      //generate chai assertions based on current state
       debouncedGenerateChaiAssertions();
     })
 
-    //add event handlers to the value textbox
+    //ADD EVENT LISTENERS TO THE VALUE INPUT TEXT BOX
     propertyValueTextBox.addEventListener('input', event => {
-      formEntry.propertyValue = propertyValueTextBox.value;
+
+      //update testformdata data structure with newly input value
+      formEntry.currentFormData.propertyValue = propertyValueTextBox.value;
+      //generate chai assertions based on current state
       debouncedGenerateChaiAssertions();
-      //re-create tooltips if necessary on userinput
+      //re-create tooltips in case the user input value is too large for the textbox
       propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
       debouncedRegisterTooltip('propertyValue' + index);
     })
 
-    //add event handlers to the enabled/disabled slider
+    //todo: decide upon and handle if necessary loading enabled/disabled status  from stored form data
+    //ADD EVENT LISTENERS TO THE ENABLED/DISABLED SLIDER
     enabledSlider.addEventListener('click', event => {
       if (enabledSlider.checked) {
-        formEntry.enabled = true;
+        formEntry.currentFormData.enabled = true;
       } else {
-        formEntry.enabled = false;
+        formEntry.currentFormData.enabled = false;
       }
       debouncedGenerateChaiAssertions()
     })
@@ -218,8 +146,8 @@ function populateTestFormData(obj, path) {
     //  using dot notation, or bracket notation with a string value passed in... depending on whether the key/index to the value
     //  is a so-called valid identifier or not.  (e.g. testObject.name = "grey"   or testObject["10"] = "the key for this value is 10").
     //  With arrays, you must index using bracket notation as all keys are numbers (and therefore not valid identifers,
-    //  so bracket notation becomes a requirement).  By convention, this number is passed in as number, and not a string
-    //  e.g. myArray[10] is generally used, not myArray["10"].
+    //  so bracket notation becomes a requirement).  Similarly, coding convention dictates that this number is passed in as number,
+    //  and not a string e.g. myArray[10] is generally used, not myArray["10"].
     //
     //  The code below is generating chai assertions (aka javascript code), so we are trying to account for the above
     //  conventions when generating these assertions.  The logic that is trying to account for this is below
@@ -238,31 +166,72 @@ function populateTestFormData(obj, path) {
     }
 
     //in this series of if-elseif, we account for all the compound and primitive types available in a JSON object: array,object (compound),
-    //and string,bool,number,null (primitive).
+    //and string,bool,number,null (primitive), and generate the initial testFormData object.
     if (_.isObject(value)) {   //note that _.isObject will pass for both arrays and objects by design, and we rely on that behavior here:
-      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.exist', type: 'object', enabled: true});
+      testFormData.push({
+        currentFormData: {
+          propertyName: !path ? key : path + key,
+          condition: '.to.exist',
+          type: 'object',
+          enabled: true
+        }
+      });
+      //make recursive call to do the same for child entities of this array/object
       populateTestFormData(value, !path ? key : path + key)
     }
     else if (_.isString(value)) {
-      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.equal', type: 'string', enabled: true, propertyValue: value});
+      testFormData.push({
+        currentFormData: {
+          propertyName: !path ? key : path + key,
+          condition: '.to.equal',
+          type: 'string',
+          enabled: true,
+          propertyValue: value
+        }
+      });
     }
     else if (_.isBoolean(value)) {
-      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.be.' + value, type: 'bool', enabled: true});
+      testFormData.push({
+        currentFormData: {
+          propertyName: !path ? key : path + key,
+          condition: '.to.be.' + value,
+          type: 'bool',
+          enabled: true
+        }
+      });
     }
     else if (_.isNumber(value)) {
-      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.equal', type: 'number', enabled: true, propertyValue: value});
+      testFormData.push({
+        currentFormData: {
+          propertyName: !path ? key : path + key,
+          condition: '.to.equal',
+          type: 'number',
+          enabled: true,
+          propertyValue: value
+        }
+      });
     }
     else if (_.isNull(value)) {
-      testFormData.push({propertyName: !path ? key : path + key, condition: '.to.be.null', type: 'null', enabled: true});
+      testFormData.push({
+        currentFormData: {
+          propertyName: !path ? key : path + key,
+          condition: '.to.be.null',
+          type: 'null',
+          enabled: true
+        }
+      });
     }
   });
 }
 
-//generate chai assertions based on data in the form.  Generally this should not be called directly, but instead the debounced version should be called
+//generate chai assertions based on data in testFormData.  Generally this should not be called directly, but instead the debounced version should be called
 function generateChaiAssertions () {
   let chaiAssertions = _.map(testFormData, function (formEntry) {
+    //change point to point to relevant data
+    formEntry = formEntry.currentFormData
+
     if (formEntry.enabled === true) {
-      if (formEntry.type === 'object' || formEntry.type === 'bool' || formEntry.type === 'null' ||  _.includes(['.to.exist','.to.not.exist'], formEntry.condition)) {
+      if (_.includes(conditionsThatDoNotAcceptAProperty, formEntry.condition)) {
         return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
       }
       else if (formEntry.type === 'string') {
@@ -315,6 +284,55 @@ function registerTooltip(id) {
   }
 }
 
+function renderFormEntry(index, formEntry) {
+  let typeSelect = document.getElementById('typeSelect' + index)
+  let conditionSelect = document.getElementById('conditionSelect' + index)
+  let propertyValueTextBox = document.getElementById('propertyValue' + index)
+  let enabledSlider = document.getElementById('enabledSlider' + index)
+
+
+  let buttonColorClass = _.filter(typeSelect.classList, function(singleClass) {
+    return _.includes(singleClass, 'btn-outline-');
+  })
+  if (buttonColorClass.length > 1) {throw 'expecting only single class'}
+  else {
+    buttonColorClass = buttonColorClass[0]
+  }
+
+  let formData = formEntry.currentFormData
+
+  typeSelect.innerHTML = ' ' + formData.type.substring(0,1) + ' ';
+  let newButtonColorStyle = '';
+  switch (formData.type) {
+    case 'number':
+      newButtonColorStyle = 'primary'
+      break;
+    case 'string':
+      newButtonColorStyle = 'success'
+      break;
+    case 'bool':
+      newButtonColorStyle = 'info'
+      break;
+    case 'object':
+      newButtonColorStyle = 'danger'
+      break;
+    case 'null':
+      newButtonColorStyle = 'warning'
+      break;
+  }
+  typeSelect.classList.replace(buttonColorClass, 'btn-outline-' + newButtonColorStyle);
+  conditionSelect.innerHTML=templates[formData.type + 'ConditionOptions']();
+  conditionSelect.value = formEntry.currentFormData.condition;
+
+  if (!_.includes(conditionsThatDoNotAcceptAProperty, formData.condition)) {
+    propertyValueTextBox.value = formEntry.currentFormData.propertyValue
+    propertyValueTextBox.removeAttribute('disabled')
+  }
+  else {
+    propertyValueTextBox.value = 'N/A'
+    propertyValueTextBox.setAttribute('disabled', 'true')
+  }
+}
 
 ///////////////////////////////////////////
 // Initialization - Setup/Config Section //
@@ -354,7 +372,7 @@ let debouncedRegisterTooltip = debounceAFunction(registerTooltip, 300)
 let resizeObserver = new ResizeObserver(debouncedRegisterTooltips);
 resizeObserver.observe(document.getElementById('testFormContainer'));
 
-//Register Event Listeners for JSONEditor so that we can regenerate the testform
+//Register Event Listeners for JSONEditor so that we can regenerate the testform when user inputs new JSON
 jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
 //invoke initial functionality once the page loads
@@ -364,6 +382,67 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
 });
 
+///////////////////////////////////////////////////
+// Initialization - Templates/Handlebars Section //
+///////////////////////////////////////////////////
+
+//Register several partial templates so that they can be referenced in other templates.  Similarly, compile them so they
+//can be invoked/called from JS code.
+let templates = {}
+Handlebars.registerPartial('numberConditionOptions', "\
+  <option selected value = '.to.equal'>=</option>\
+  <option value = '.to.not.equal'>!=</option>\
+  <option value = '.to.be.above'>&gt;</option>\
+  <option value = '.to.be.at.least'>&gt;=</option>\
+  <option value = '.to.be.below'>&lt;</option>\
+  <option value = '.to.be.at.most'>&lt;=</option>\
+  <option value = '.to.be.null'>isNull</option>\
+  <option value = '.to.not.be.null'>isNotNull</option>\
+  <option value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+templates.numberConditionOptions = Handlebars.compile("{{> numberConditionOptions}}");
+
+Handlebars.registerPartial('stringConditionOptions', "\
+  <option selected value = '.to.equal'>=</option>\
+  <option value = '.to.not.equal'>!=</option>\
+  <option value = '.to.contain'>Contains</option>\
+  <option value = '.to.not.contain'>!Contains</option>\
+  <option value = '.to.be.null'>isNull</option>\
+  <option value = '.to.not.be.null'>isNotNull</option>\
+  <option value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+templates.stringConditionOptions = Handlebars.compile("{{> stringConditionOptions}}");
+
+Handlebars.registerPartial('boolConditionOptions', "\
+  <option selected value = '.to.be.true'>isTrue</option>\
+  <option value = '.to.be.false'>isFalse</option>\
+  <option value = '.to.be.null'>isNull</option>\
+  <option value = '.to.not.be.null'>isNotNull</option>\
+  <option value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+templates.boolConditionOptions = Handlebars.compile("{{> boolConditionOptions}}");
+
+Handlebars.registerPartial('nullConditionOptions', "\
+  <option selected value = '.to.be.null'>isNull</option>\
+  <option value = '.to.not.be.null'>isNotNull</option>\
+  <option value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+templates.nullConditionOptions = Handlebars.compile("{{> nullConditionOptions}}");
+
+Handlebars.registerPartial('objectConditionOptions', "\
+  <option value = '.to.be.null'>isNull</option>\
+  <option value = '.to.not.be.null'>isNotNull</option>\
+  <option selected value = '.to.exist'>Exists</option>\
+  <option value = '.to.not.exist'>!Exists</option>\
+");
+templates.objectConditionOptions = Handlebars.compile("{{> objectConditionOptions}}");
+
+//Create "conditional render" Handlebars 'helper' thats a little more robust than the built-in #if helper.   Helps us
+//to conditionally render partial templates
 Handlebars.registerHelper('conditionalRender', function(...args) {
   //first parameter is the value we are checking
   let contextValue = args[0];
@@ -379,53 +458,6 @@ Handlebars.registerHelper('conditionalRender', function(...args) {
     return options.inverse(this); // Render the else block if present
   }
 });
-
-////////////////////////////////////////
-// Initialization - Templates Section //
-////////////////////////////////////////
-
-//Register several partials so that they can be referenced in other templates.  Similarly, compile them so they
-//can be invoked/called from JS code.
-let templates = {}
-Handlebars.registerPartial('numberConditionOptions', "\
-  <option selected value = '.to.equal'>=</option>\
-  <option value = '.to.not.equal'>!=</option>\
-  <option value = '.to.be.above'>&gt;</option>\
-  <option value = '.to.be.at.least'>&gt;=</option>\
-  <option value = '.to.be.below'>&lt;</option>\
-  <option value = '.to.be.at.most'>&lt;=</option>\
-  <option value = '.to.exist'>Exists</option>\
-  <option value = '.to.not.exist'>!Exists</option>\
-");
-let numberConditionOptions = Handlebars.compile("{{> numberConditionOptions}}");
-templates.numberConditionOptions = Handlebars.compile("{{> numberConditionOptions}}");
-
-Handlebars.registerPartial('stringConditionOptions', "\
-  <option selected value = '.to.equal'>=</option>\
-  <option value = '.to.not.equal'>!=</option>\
-  <option value = '.to.contain'>Contains</option>\
-  <option value = '.to.not.contain'>!Contains</option>\
-  <option value = '.to.exist'>Exists</option>\
-  <option value = '.to.not.exist'>!Exists</option>\
-");
-let stringConditionOptions = Handlebars.compile("{{> stringConditionOptions}}");
-templates.stringConditionOptions = Handlebars.compile("{{> stringConditionOptions}}");
-
-Handlebars.registerPartial('boolConditionOptions', "\
-  <option selected value = '.to.be.true'>isTrue</option>\
-  <option value = '.to.be.false'>isFalse</option>\
-  <option value = '.to.exist'>Exists</option>\
-  <option value = '.to.not.exist'>!Exists</option>\
-");
-let boolConditionOptions = Handlebars.compile("{{> boolConditionOptions}}");
-templates.boolConditionOptions = Handlebars.compile("{{> boolConditionOptions}}");
-
-Handlebars.registerPartial('objectConditionOptions', "\
-  <option selected value = '.to.exist'>Exists</option>\
-  <option value = '.to.not.exist'>!Exists</option>\
-");
-let objectConditionOptions = Handlebars.compile("{{> objectConditionOptions}}");
-templates.objectConditionOptions = Handlebars.compile("{{> objectConditionOptions}}");
 
 //This template is responsible for rendering the initial state of the form upon a call to handleJSONInput().   Subsequent
 //changes to the form (by manipulating the input fields) are handled by eventlisteners created in the handleJSONInput() function
@@ -450,23 +482,23 @@ let mainTemplate = Handlebars.compile("\
   {{#each items}}\
     <div class='row mb-1'>\
       <div class='col-1 ps-0 pe-0'>\
-        {{#conditionalRender type 'number'}}\
+        {{#conditionalRender currentFormData.type 'number'}}\
         <button type='button' class='btn btn-sm btn-outline-primary custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
           n\
         {{/conditionalRender}}\
-        {{#conditionalRender type 'string'}}\
+        {{#conditionalRender currentFormData.type 'string'}}\
         <button type='button' class='btn btn-sm btn-outline-success custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
           s\
         {{/conditionalRender}}\
-        {{#conditionalRender type 'bool'}}\
+        {{#conditionalRender currentFormData.type 'bool'}}\
         <button type='button' class='btn btn-sm btn-outline-info custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
           b\
         {{/conditionalRender}}\
-        {{#conditionalRender type 'null'}}\
+        {{#conditionalRender currentFormData.type 'null'}}\
         <button type='button' class='btn btn-sm btn-outline-warning custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
           n\
         {{/conditionalRender}}\
-        {{#conditionalRender type 'object'}}\
+        {{#conditionalRender currentFormData.type 'object'}}\
         <button type='button' class='btn btn-sm btn-outline-danger custom-btn dropdown-toggle custom-form-styling rounded-0 rounded-start' data-bs-toggle='dropdown' id='typeSelect{{@index}}'>\
           o\
         {{/conditionalRender}}\
@@ -479,36 +511,33 @@ let mainTemplate = Handlebars.compile("\
         </ul>\
       </div>\
       <div class='col-4 ps-0 pe-0'>\
-        <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyName}}'>\
-          <input type='text' class='form-control form-control-sm custom-form-styling ps-1 pe-1 rounded-0' id='propertyName{{@index}}' value='{{propertyName}}' disabled=true>\
+        <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{currentFormData.propertyName}}'>\
+          <input type='text' class='form-control form-control-sm custom-form-styling ps-1 pe-1 rounded-0' id='propertyName{{@index}}' value='{{currentFormData.propertyName}}' disabled=true>\
         </div>\
       </div>\
       <div class='col-2 ps-0 pe-0'>\
         <select class='form-select form-select-sm custom-form-styling ps-1 pe-1 rounded-0' id='conditionSelect{{@index}}'>\
-        {{#conditionalRender type 'object'}}\
+        {{#conditionalRender currentFormData.type 'object'}}\
           {{> objectConditionOptions}}\
         {{/conditionalRender}}\
-        {{#conditionalRender type 'string'}}\
+        {{#conditionalRender currentFormData.type 'string'}}\
           {{> stringConditionOptions}}\
         {{/conditionalRender}}\
-        {{#conditionalRender type 'bool'}}\
+        {{#conditionalRender currentFormData.type 'bool'}}\
           {{> boolConditionOptions}}\
         {{/conditionalRender}}\
-        {{#conditionalRender type 'null'}}\
-          <option value = '.to.be.null'>isNull</option>\
-          <option value = '.to.not.be.null'>isNotNull</option>\
-          <option value = '.to.exist'>Exists</option>\
-          <option value = '.to.not.exist'>!Exists</option>\
+        {{#conditionalRender currentFormData.type 'null'}}\
+          {{> nullConditionOptions}}\
         {{/conditionalRender}}\
-        {{#conditionalRender type 'number'}}\
+        {{#conditionalRender currentFormData.type 'number'}}\
           {{> numberConditionOptions}}\
         {{/conditionalRender}}\
         </select>\
       </div>\
       <div class='col-4 ps-0'>\
-      {{#conditionalRender type 'number' 'string'}}\
-        <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{propertyValue}}'>\
-          <input type='text' class='form-control form-control-sm custom-form-styling ps-1 rounded-0 rounded-end' id='propertyValue{{@index}}' value='{{propertyValue}}'>\
+      {{#conditionalRender currentFormData.type 'number' 'string'}}\
+        <div data-bs-toggle='tooltip' data-bs-placement='bottom' data-bs-title='{{currentFormData.propertyValue}}'>\
+          <input type='text' class='form-control form-control-sm custom-form-styling ps-1 rounded-0 rounded-end' id='propertyValue{{@index}}' value='{{currentFormData.propertyValue}}'>\
         </div>\
       {{else}}\
         <input type='text' class='form-control form-control-sm custom-form-styling ps-1 rounded-0 rounded-end' id='propertyValue{{@index}}' value='N/A' disabled=true>\
@@ -523,10 +552,53 @@ let mainTemplate = Handlebars.compile("\
   {{/each}}\
 ");
 
+///////////////////////////////////////
+// Utility Functions/Objects Section //
+///////////////////////////////////////
 
-//////////////////////////////
-// Utility Function Section //
-//////////////////////////////
+const conditionsThatDoNotAcceptAProperty = [
+  '.to.exist',
+  '.to.not.exist',
+  '.to.be.true',
+  '.to.be.false',
+  '.to.be.null',
+  '.to.not.be.null',
+]
+
+const defaultFormData = {
+  string: {
+    type: 'string',
+    propertyName: '',
+    condition: '.to.equal',
+    propertyValue: 'sample string',
+    enabled: true,
+  },
+  number: {
+    type: 'number',
+    propertyName: '',
+    condition: '.to.equal',
+    propertyValue: 12345,
+    enabled: true
+  },
+  bool: {
+    type: 'bool',
+    propertyName: '',
+    condition: '.to.be.true',
+    enabled: true,
+  },
+  null: {
+    type: 'null',
+    propertyName: '',
+    condition: '.to.be.null',
+    enabled: true,
+  },
+  object: {
+    type: 'object',
+    propertyName: '',
+    condition: '.to.exist',
+    enabled: true
+  }
+}
 
 //function to test keys in JSON object so we can know if out chai assertions can reference them via . notation, or we
 //must resort to [] notation.  JS documentation says that . notation must use valid identifiers the characteristics of which
