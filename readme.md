@@ -1,12 +1,15 @@
+# Postman Companion
+
+<a href="https://project-types.github.io/#toy">
+  <img src="https://img.shields.io/badge/project%20type-toy-blue" alt="Toy Badge"/>
+</a> <a href="https://www.repostatus.org/#concept"><img src="https://www.repostatus.org/badges/latest/concept.svg" alt="Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept." /></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground.svg?type=shield"/></a>
+
 ## Table of Contents
 1. <a href="https://github.com/postman-solutions-eng/governance-rules-playground#governance-rules-playground">Governace Rules Playground Documentation</a>
 2. <a href="https://github.com/postman-solutions-eng/governance-rules-playground#visual-test-composer">Visual Test Composer Documentation</a>
 
 ## Governance Rules Playground
-
-<a href="https://project-types.github.io/#toy">
-  <img src="https://img.shields.io/badge/project%20type-toy-blue" alt="Toy Badge"/>
-</a> <a href="https://www.repostatus.org/#concept"><img src="https://www.repostatus.org/badges/latest/concept.svg" alt="Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept." /></a>
 
 ### Sample App
 The tool is available for use at https://governance-rules-playground.postmansolutions.com/
@@ -82,10 +85,7 @@ information, or chai assertions leave the web browser unless said action is expl
 
 ### License
 
-Copyright 2022 - Jordan Walsh & Grey Schober
+See <a href="./LICENSE">LICENSE</a>.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground?ref=badge_large)
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
