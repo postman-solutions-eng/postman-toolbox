@@ -102,3 +102,11 @@ h4 {
   color: white;
   font-family: 'Courier New', Courier, monospace;
 }
+
+
+/* JSONTree Styles */
+.json-container, .json-key {
+  background-color: transparent !important;
+  color: white !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
