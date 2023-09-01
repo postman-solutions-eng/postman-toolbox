@@ -1,9 +1,11 @@
 //data containers referenced across this entire component
 let testFormData = [];
 let tooltips = {};
-let currentJSON = {};
+
+
 
 //todo: add isnull as testtype
+//todo: move currentJSON into function since its not used anywhere else
 
 // This function is the initial entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
 // this function populates the data structure upon which this entire page is reliant (testFormData array), generates the initial state of the
@@ -12,6 +14,7 @@ let currentJSON = {};
 function handleJSONInput() {
   //reset testFormData field in case user uses this tool multiple times in a row
   testFormData = []
+  let currentJSON = {}
   try {
     currentJSON = JSON.parse(jsonEditor.getValue())
   }
@@ -32,11 +35,12 @@ function handleJSONInput() {
   //restore event handler
   jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
-  generateTestForm(currentJSON);
+  populateTestFormData(currentJSON);
 
   //render template
   document.getElementById('testFormContainer').innerHTML = mainTemplate({items: testFormData});
 
+  //todo: pull the logic that sets up event listeners into a separate function to make this more readable
   //register listeners for each input field
   _.forEach(testFormData, function(formEntry, index) {
 
@@ -60,29 +64,88 @@ function handleJSONInput() {
           buttonColorClass = buttonColorClass[0]
         }
 
+        //remember value of propertyValueTextBox if applicable (i.e. if field was editable at the time aka if the formentry
+        //was of type string or number), so that we can restore it if the user navigates back to this type in the type select
         if (formEntry.type === 'string' || formEntry.type === 'number') {
           formEntry['old' + formEntry.type + 'PropertyValue'] = propertyValueTextBox.value;
         }
 
-        switch (option.innerHTML) {
-          case 'Number':
-            //todo: re-register tooltip
-            //todo: remember previously selected condition and restore it
-            typeSelect.innerHTML = ' n ';
-            typeSelect.classList.replace(buttonColorClass, 'btn-outline-primary');
-            formEntry.type = 'number';
-            formEntry.condition = '.to.equal'
-            conditionSelect.innerHTML=numberConditionOptions();
-            if (formEntry.oldnumberPropertyValue) {
-              propertyValueTextBox.value = formEntry.oldnumberPropertyValue
-              formEntry.propertyValue = formEntry.oldnumberPropertyValue
-            }
-            else {
-              formEntry.propertyValue = 12345
-              propertyValueTextBox.value = 12345;
-            }
-            propertyValueTextBox.removeAttribute('disabled');
-            debouncedGenerateChaiAssertions();
+        //remember the selectedcondition, so that we can restore it if the user navigates back to this type in the type select
+        formEntry['old' + formEntry.type + 'ConditionSelectedIndex'] = conditionSelect.selectedIndex;
+
+        // switch (option.innerHTML) {
+        //   case 'Number':
+        //     //todo: remember previously selected condition and restore it
+        //     typeSelect.innerHTML = ' n ';
+        //     typeSelect.classList.replace(buttonColorClass, 'btn-outline-primary');
+        //     formEntry.type = 'number';
+        //     conditionSelect.innerHTML=numberConditionOptions();
+        //     if (formEntry.oldnumberConditionSelectedIndex) {
+        //       conditionSelect.selectedIndex = formEntry.oldnumberConditionSelectedIndex
+        //       formEntry.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
+        //     }
+        //     else {
+        //       conditionSelect.selectedIndex = 0;
+        //       formEntry.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
+        //     }
+        //     if (formEntry.oldnumberPropertyValue) {
+        //       propertyValueTextBox.value = formEntry.oldnumberPropertyValue
+        //       formEntry.propertyValue = formEntry.oldnumberPropertyValue
+        //     }
+        //     else {
+        //       formEntry.propertyValue = 12345
+        //       propertyValueTextBox.value = 12345;
+        //     }
+        //     propertyValueTextBox.removeAttribute('disabled');
+        //     debouncedGenerateChaiAssertions();
+        //     break;
+        //   case 'String':
+        //     typeSelect.innerHTML = ' s ';
+        //     typeSelect.classList.replace(buttonColorClass, 'btn-outline-success');
+        //     formEntry.type = 'string';
+        //     formEntry.condition = '.to.equal'
+        //     conditionSelect.innerHTML=stringConditionOptions();
+        //     if (formEntry.oldstringPropertyValue) {
+        //       propertyValueTextBox.value = formEntry.oldstringPropertyValue
+        //       formEntry.propertyValue = formEntry.oldstringPropertyValue
+        //     }
+        //     else {
+        //       formEntry.propertyValue = 'sample string'
+        //       propertyValueTextBox.value = 'sample string';
+        //     }
+        //     propertyValueTextBox.removeAttribute('disabled')
+        //     debouncedGenerateChaiAssertions();
+        //     break;
+        //   case 'Bool':
+        //     typeSelect.innerHTML = ' b ';
+        //     typeSelect.classList.replace(buttonColorClass, 'btn-outline-info')
+        //     formEntry.type = 'bool';
+        //     formEntry.condition = '.to.be.true'
+        //     conditionSelect.innerHTML=boolConditionOptions();
+        //     propertyValueTextBox.value = 'N/A';
+        //     propertyValueTextBox.setAttribute('disabled', 'true')
+        //     debouncedGenerateChaiAssertions();
+        //     break;
+        //   case 'Object/Array':
+        //     typeSelect.innerHTML = ' o ';
+        //     typeSelect.classList.replace(buttonColorClass, 'btn-outline-danger')
+        //     formEntry.type = 'object';
+        //     formEntry.condition = '.to.exist'
+        //     conditionSelect.innerHTML=objectConditionOptions();
+        //     propertyValueTextBox.value = 'N/A';
+        //     propertyValueTextBox.setAttribute('disabled', 'true')
+        //     debouncedGenerateChaiAssertions();
+        //     break;
+        // }
+
+
+        typeSelect.innerHTML = ' ' + option.value.substring(0,1) + ' ';
+
+        //todo: address this
+        let newBootstrapButtonStyle = '';
+        switch (option.value) {
+          case 'number':
+            newBootstrapButtonStyle = 'primary';
             break;
           case 'String':
             typeSelect.innerHTML = ' s ';
@@ -137,15 +200,16 @@ function handleJSONInput() {
           testFormData[index].oldValue = propertyValueTextBox.value;
         }
         propertyValueTextBox.value = 'N/A';
+        formEntry.propertyValue = 'N/A';
         propertyValueTextBox.setAttribute('disabled', true)
       }
-      //if they select the some other than !exist or exists operators, then enable  value input box, and restore
+      //if they select the something other than !exist or exists operators, then enable  value input box, and restore
       //the old value if there was one
       else {
         propertyValueTextBox.removeAttribute('disabled')
-        if (testFormData[index].oldValue) {
-          propertyValueTextBox.value = testFormData[index].oldValue;
-          delete testFormData[index].oldValue;
+        if (formEntry['old' + formEntry.type + 'PropertyValue']) {
+          propertyValueTextBox.value = formEntry['old' + formEntry.type + 'PropertyValue'];
+          formEntry.propertyValue = formEntry['old' + formEntry.type + 'PropertyValue'];
         }
       }
       debouncedGenerateChaiAssertions();
@@ -153,7 +217,7 @@ function handleJSONInput() {
 
     //add event handlers to the value textbox
     propertyValueTextBox.addEventListener('input', event => {
-      testFormData[index].propertyValue = propertyValueTextBox.value;
+      formEntry.propertyValue = propertyValueTextBox.value;
       debouncedGenerateChaiAssertions();
       //re-create tooltips if necessary on userinput
       propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
@@ -163,23 +227,26 @@ function handleJSONInput() {
     //add event handlers to the enabled/disabled slider
     enabledSlider.addEventListener('click', event => {
       if (enabledSlider.checked) {
-        testFormData[index].enabled = true;
+        formEntry.enabled = true;
       } else {
-        testFormData[index].enabled = false;
+        formEntry.enabled = false;
       }
       debouncedGenerateChaiAssertions()
     })
 
+    //create tooltips on elements where the value length is longer than the textbox displaying it
+    registerTooltip('propertyValue' + index)
+    registerTooltip('propertyName' + index)
+
   })
-  //create tooltips on elements where the value length is longer than the textbox displaying it
-  registerTooltips()
+
   //generate initial set of assertions for current JSON
   generateChaiAssertions()
 }
 
 //recursive function that generates the initial state of the form based on the JSON payload provided by the user.  This
 //function is intended to be run only when the JSON input is changed.
-function generateTestForm(obj, path) {
+function populateTestFormData(obj, path) {
   _.each(obj, function (value, key) {
     // Javascript allows you to index to entries in both javascript objects and arrays (where the keys are explicitly strings or
     // integers respectively) using bracket notation where the key is passed in EITHER as a number or a string
@@ -222,7 +289,7 @@ function generateTestForm(obj, path) {
     //and string,bool,number,null (primitive).
     if (_.isObject(value)) {   //note that _.isObject will pass for both arrays and objects by design, and we rely on that behavior here:
       testFormData.push({propertyName: !path ? key : path + key, condition: '.to.exist', type: 'object', enabled: true});
-      generateTestForm(value, !path ? key : path + key)
+      populateTestFormData(value, !path ? key : path + key)
     }
     else if (_.isString(value)) {
       testFormData.push({propertyName: !path ? key : path + key, condition: '.to.equal', type: 'string', enabled: true, propertyValue: value});
@@ -332,9 +399,8 @@ let debouncedRegisterTooltips = debounceAFunction(registerTooltips, 300)
 let debouncedRegisterTooltip = debounceAFunction(registerTooltip, 300)
 
 //watch for resizes of the testForm (will only happen on a resize of the browser window), so that we can recalculate tooltips
-let elementToObserve = document.getElementById('testFormContainer');
 let resizeObserver = new ResizeObserver(debouncedRegisterTooltips);
-resizeObserver.observe(elementToObserve);
+resizeObserver.observe(document.getElementById('testFormContainer'));
 
 //Register Event Listeners for JSONEditor so that we can regenerate the testform
 jsonEditor.getSession().on('change', debouncedHandleJSONInput)
@@ -368,6 +434,7 @@ Handlebars.registerHelper('conditionalRender', function(...args) {
 
 //Register several partials so that they can be referenced in other templates.  Similarly, compile them so they
 //can be invoked/called from JS code.
+let templates = {}
 Handlebars.registerPartial('numberConditionOptions', "\
   <option selected value = '.to.equal'>=</option>\
   <option value = '.to.not.equal'>!=</option>\
@@ -379,6 +446,7 @@ Handlebars.registerPartial('numberConditionOptions', "\
   <option value = '.to.not.exist'>!Exists</option>\
 ");
 let numberConditionOptions = Handlebars.compile("{{> numberConditionOptions}}");
+templates.numberConditionOptions = Handlebars.compile("{{> numberConditionOptions}}");
 
 Handlebars.registerPartial('stringConditionOptions', "\
   <option selected value = '.to.equal'>=</option>\
@@ -389,6 +457,7 @@ Handlebars.registerPartial('stringConditionOptions', "\
   <option value = '.to.not.exist'>!Exists</option>\
 ");
 let stringConditionOptions = Handlebars.compile("{{> stringConditionOptions}}");
+templates.stringConditionOptions = Handlebars.compile("{{> stringConditionOptions}}");
 
 Handlebars.registerPartial('boolConditionOptions', "\
   <option selected value = '.to.be.true'>isTrue</option>\
@@ -397,12 +466,14 @@ Handlebars.registerPartial('boolConditionOptions', "\
   <option value = '.to.not.exist'>!Exists</option>\
 ");
 let boolConditionOptions = Handlebars.compile("{{> boolConditionOptions}}");
+templates.boolConditionOptions = Handlebars.compile("{{> boolConditionOptions}}");
 
 Handlebars.registerPartial('objectConditionOptions', "\
   <option selected value = '.to.exist'>Exists</option>\
   <option value = '.to.not.exist'>!Exists</option>\
 ");
 let objectConditionOptions = Handlebars.compile("{{> objectConditionOptions}}");
+templates.objectConditionOptions = Handlebars.compile("{{> objectConditionOptions}}");
 
 //This template is responsible for rendering the initial state of the form upon a call to handleJSONInput().   Subsequent
 //changes to the form (by manipulating the input fields) are handled by eventlisteners created in the handleJSONInput() function
@@ -449,10 +520,10 @@ let mainTemplate = Handlebars.compile("\
         {{/conditionalRender}}\
         </button>\
         <ul class='dropdown-menu pt-0 pb-0' id='typeSelect{{@index}}Options'>\
-          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Number'>Number</button>\
-          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-String'>String</button>\
-          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Bool'>Bool</button>\
-          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Object'>Object/Array</button>\
+          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Number' value='number'>Number</button>\
+          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-String' value='string'>String</button>\
+          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Bool' value='bool'>Bool</button>\
+          <button class='dropdown-item mb-0 custom-form-styling' type='button' id='typeSelect{{@index}}Option-Object' value='object'>Object/Array</button>\
         </ul>\
       </div>\
       <div class='col-4 ps-0 pe-0'>\
