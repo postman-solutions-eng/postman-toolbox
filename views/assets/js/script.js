@@ -44,7 +44,13 @@ async function validate () {
         pathTd.innerText = jsonPathMatch.path
 
         let matchesTd = document.createElement('td')
-        matchesTd.innerText = jsonPathMatch.matches.join('\r\n')
+        if(jsonPathMatch.matches.length > 0) {
+          const tree = jsonview.create(jsonPathMatch.matches);
+          jsonview.render(tree, matchesTd);
+          jsonview.expand(tree);
+        } else {
+          matchesTd.innerText = "No matches found."
+        }
 
         tr.appendChild(pathTd)
         tr.appendChild(matchesTd)
