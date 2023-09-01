@@ -73,79 +73,31 @@ function handleJSONInput() {
         //remember the selectedcondition, so that we can restore it if the user navigates back to this type in the type select
         formEntry['old' + formEntry.type + 'ConditionSelectedIndex'] = conditionSelect.selectedIndex;
 
-        // switch (option.innerHTML) {
-        //   case 'Number':
-        //     //todo: remember previously selected condition and restore it
-        //     typeSelect.innerHTML = ' n ';
-        //     typeSelect.classList.replace(buttonColorClass, 'btn-outline-primary');
-        //     formEntry.type = 'number';
-        //     conditionSelect.innerHTML=numberConditionOptions();
-        //     if (formEntry.oldnumberConditionSelectedIndex) {
-        //       conditionSelect.selectedIndex = formEntry.oldnumberConditionSelectedIndex
-        //       formEntry.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
-        //     }
-        //     else {
-        //       conditionSelect.selectedIndex = 0;
-        //       formEntry.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
-        //     }
-        //     if (formEntry.oldnumberPropertyValue) {
-        //       propertyValueTextBox.value = formEntry.oldnumberPropertyValue
-        //       formEntry.propertyValue = formEntry.oldnumberPropertyValue
-        //     }
-        //     else {
-        //       formEntry.propertyValue = 12345
-        //       propertyValueTextBox.value = 12345;
-        //     }
-        //     propertyValueTextBox.removeAttribute('disabled');
-        //     debouncedGenerateChaiAssertions();
-        //     break;
-        //   case 'String':
-        //     typeSelect.innerHTML = ' s ';
-        //     typeSelect.classList.replace(buttonColorClass, 'btn-outline-success');
-        //     formEntry.type = 'string';
-        //     formEntry.condition = '.to.equal'
-        //     conditionSelect.innerHTML=stringConditionOptions();
-        //     if (formEntry.oldstringPropertyValue) {
-        //       propertyValueTextBox.value = formEntry.oldstringPropertyValue
-        //       formEntry.propertyValue = formEntry.oldstringPropertyValue
-        //     }
-        //     else {
-        //       formEntry.propertyValue = 'sample string'
-        //       propertyValueTextBox.value = 'sample string';
-        //     }
-        //     propertyValueTextBox.removeAttribute('disabled')
-        //     debouncedGenerateChaiAssertions();
-        //     break;
-        //   case 'Bool':
-        //     typeSelect.innerHTML = ' b ';
-        //     typeSelect.classList.replace(buttonColorClass, 'btn-outline-info')
-        //     formEntry.type = 'bool';
-        //     formEntry.condition = '.to.be.true'
-        //     conditionSelect.innerHTML=boolConditionOptions();
-        //     propertyValueTextBox.value = 'N/A';
-        //     propertyValueTextBox.setAttribute('disabled', 'true')
-        //     debouncedGenerateChaiAssertions();
-        //     break;
-        //   case 'Object/Array':
-        //     typeSelect.innerHTML = ' o ';
-        //     typeSelect.classList.replace(buttonColorClass, 'btn-outline-danger')
-        //     formEntry.type = 'object';
-        //     formEntry.condition = '.to.exist'
-        //     conditionSelect.innerHTML=objectConditionOptions();
-        //     propertyValueTextBox.value = 'N/A';
-        //     propertyValueTextBox.setAttribute('disabled', 'true')
-        //     debouncedGenerateChaiAssertions();
-        //     break;
-        // }
-
-
-        typeSelect.innerHTML = ' ' + option.value.substring(0,1) + ' ';
-
-        //todo: address this
-        let newBootstrapButtonStyle = '';
-        switch (option.value) {
-          case 'number':
-            newBootstrapButtonStyle = 'primary';
+        switch (option.innerHTML) {
+          case 'Number':
+            //todo: remember previously selected condition and restore it
+            typeSelect.innerHTML = ' n ';
+            typeSelect.classList.replace(buttonColorClass, 'btn-outline-primary');
+            formEntry.type = 'number';
+            conditionSelect.innerHTML=numberConditionOptions();
+            // if (formEntry.oldnumberConditionSelectedIndex) {
+            //   conditionSelect.selectedIndex = formEntry.oldnumberConditionSelectedIndex
+            //   formEntry.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
+            // }
+            // else {
+            //   conditionSelect.selectedIndex = 0;
+            //   formEntry.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
+            // }
+            if (formEntry.oldnumberPropertyValue) {
+              propertyValueTextBox.value = formEntry.oldnumberPropertyValue
+              formEntry.propertyValue = formEntry.oldnumberPropertyValue
+            }
+            else {
+              formEntry.propertyValue = 12345
+              propertyValueTextBox.value = 12345;
+            }
+            propertyValueTextBox.removeAttribute('disabled');
+            debouncedGenerateChaiAssertions();
             break;
           case 'String':
             typeSelect.innerHTML = ' s ';
@@ -191,13 +143,13 @@ function handleJSONInput() {
     conditionSelect.addEventListener('change', event => {
       let selectedValue = conditionSelect.options[conditionSelect.selectedIndex].value;
 
-      testFormData[index].condition = selectedValue;
+      formEntry.condition = selectedValue;
 
       //if they select any operators that don't accept a value, then disable the value input box, and store whatever was there
       //for future restoration if they change the condition back to something that would expect a value
       if (selectedValue === '.to.exist' || selectedValue === '.to.not.exist' || selectedValue === '.to.be.true' || selectedValue === '.to.be.false' || selectedValue === '.to.be.null' || selectedValue === '.to.not.be.null') {
-        if (!testFormData[index].oldValue) {
-          testFormData[index].oldValue = propertyValueTextBox.value;
+        if (!formEntry.oldValue) {
+          formEntry.oldValue = propertyValueTextBox.value;
         }
         propertyValueTextBox.value = 'N/A';
         formEntry.propertyValue = 'N/A';
