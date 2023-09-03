@@ -52,9 +52,9 @@ function handleJSONInput() {
     let propertyValueTextBox = document.getElementById('propertyValue' + index)
     let enabledSlider = document.getElementById('enabledSlider' + index)
 
-    //ADD EVENT LISTENERS TO THE TYPESELECT.  This select is not a true select, but rather using bootstrap's dropdown classes.
-    //Consequently every option in this "pseudo-select" is its own unique bootstrap "button" on which we must setup event
-    //listeners.  I did it this way to take advantage of better formatting/styles available on buttons than on selects:
+    //ADD EVENT LISTENERS TO THE TYPESELECT.  This select is not a true select, but rather using bootstrap's dropdown classes
+    //to implement a "pseudo-select".   Every option in this "pseudo-select" is its own unique bootstrap "button" on which we
+    //must setup event listeners.  I did it this way to take advantage of better formatting/styles available on buttons than on selects:
 
     //for each button/option (i.e. bool, string, number, object/array)
     _.each(typeSelectOptions, function(option) {
@@ -64,17 +64,25 @@ function handleJSONInput() {
         //copy current form state so that it can be restored if user reverts back to the currently selected type (from type Select)
         formEntry[formEntry.currentFormData.type + 'FormData'] = _.cloneDeep(formEntry.currentFormData)
 
+        //get enabled/disabled status of current form state so we can re-apply it to the new form state
+        //(enabled/disabled status is not intended to be remembered for future restoration).
+        let enabledStatus = formEntry.currentFormData.enabled
+
         //restore form state of newly selected type if a stored form state exists
         if (formEntry[option.value + 'FormData']) {
           formEntry.currentFormData = formEntry[option.value + 'FormData']
         }
         //otherwise populate the form with some default/catch-all values (with the exception of the property name, which
-        //needs to be maintained
+        //needs to be maintained)
         else {
           let propertyName = formEntry.currentFormData.propertyName
           formEntry.currentFormData = _.cloneDeep(defaultFormData[option.value])
           formEntry.currentFormData.propertyName = propertyName
         }
+
+        //apply disabled/enabled state
+        formEntry.currentFormData.enabled = enabledStatus;
+
         //render the new form data to the screen
         renderFormEntry(index, formEntry)
         //generate chai assertions based on current state
@@ -234,12 +242,32 @@ function generateChaiAssertions () {
       if (_.includes(conditionsThatDoNotAcceptAProperty, formEntry.condition)) {
         return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
       }
+      //if string, wrap in quotes and escape any internal quotation marks
       else if (formEntry.type === 'string') {
-        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\n});';
+
+        //function to be used in tandem with string.replace in return statement below this function.   It defines the
+        //replacement logic (helps identify whether a quote mark was escaped or not when it was provided by the user)
+        //and appropriately escape the quote (or not).
+        function escapeQuotesInString(match, backslashes) {
+          // If the number of backslashes before the double quote is even, it's unescaped
+          if (backslashes.length % 2 === 0) {
+            // Escape the double quote
+            return backslashes + '\\"';
+          }
+          else {
+            // Leave the double quote as it is (part of an escape sequence)
+            return match;
+          }
+        }
+
+        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue.replace(/(\\*)(")/g, escapeQuotesInString) + '");' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue.replace(/(\\*)(")/g, escapeQuotesInString) + '");' + '\n});';
       }
       //account for number
-      else {
+      else if (formEntry.type === 'number') {
         return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\n});';
+      }
+      else {
+        throw 'Assertion not generated because we encountered a case our code logic did not account for.   Authors likely have a logic error.  Fix the code Postman!'
       }
     }
   })
