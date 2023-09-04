@@ -2,10 +2,12 @@
 let testFormData = [];
 let tooltips = {};
 
-// This function is the initial entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
+// This function is the entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
 // this function populates the data structure upon which this entire page is reliant (testFormData array), generates the initial state of the
 // test composition form, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
 // of the chai assertions.
+
+//todo: decide on whether you are keeping the functionality that remembers old input for type switching.
 function handleJSONInput() {
   //reset testFormData field in case user uses this tool multiple times in a row
   testFormData = []
@@ -61,6 +63,9 @@ function handleJSONInput() {
 
       //add a click listener and invoke the enclosed function
       option.addEventListener('click', event => {
+        //remove styles that may have been applied elsewhere in code
+        propertyValueTextBox.classList.remove('is-invalid')
+
         //copy current form state so that it can be restored if user reverts back to the currently selected type (from type Select)
         formEntry[formEntry.currentFormData.type + 'FormData'] = _.cloneDeep(formEntry.currentFormData)
 
@@ -85,6 +90,7 @@ function handleJSONInput() {
 
         //render the new form data to the screen
         renderFormEntry(index, formEntry)
+
         //generate chai assertions based on current state
         debouncedGenerateChaiAssertions();
       })
@@ -100,7 +106,21 @@ function handleJSONInput() {
     })
 
     //ADD EVENT LISTENERS TO THE VALUE INPUT TEXT BOX
+    //todo: invoke initial validation check (should always pass, but you never know).  validation below only happens on
+    // input.   invoke it after form is rendered as well.
     propertyValueTextBox.addEventListener('input', event => {
+
+      //associated validation regex with the input
+      propertyValueTextBox.setAttribute('pattern', formEntry.currentFormData.validationRegex)
+
+      if (!propertyValueTextBox.checkValidity()) {
+        propertyValueTextBox.classList.add('is-invalid')
+        return
+      }
+      else {
+        propertyValueTextBox.classList.remove('is-invalid')
+      }
+
 
       //update testformdata data structure with newly input value
       formEntry.currentFormData.propertyValue = propertyValueTextBox.value;
@@ -137,16 +157,17 @@ function handleJSONInput() {
 function populateTestFormData(obj, path) {
   _.each(obj, function (value, key) {
     // Javascript allows you to index to entries in both javascript objects and arrays (where the keys are explicitly strings or
-    // integers respectively) using bracket notation where the key is passed in EITHER as a number or a string
+    // integers respectively) using bracket notation where the key is passed in EITHER as a number or a string.  JS does thos
+    // via type coercion.
     // For example:
     // in the below object, both testObject[10] and testObject["10"] will return "the key for this value is 10" despite the fact that the
-    // key is technically a string and (in theory anyway) only testObject["10"] should work.
+    // key is technically a string and only testObject["10"] should work.   Again type coercion allows either to work
     //  let testObject = {
     //      "name": "Grey",
     //      "10": "the key for this value is 10"
     //  }
     //  Note: technically a Javascript object can have keys that ARE NOT strings (symbols), but for the purposes
-    //  of a javascript object created from parsing a JSON object, all keys will be strings
+    //  of a javascript object created from parsing a JSON payload, all keys will be strings
     //
     //  Arrays function the same... myArray[10] and myArray["10"] will both return the value at index 10.
     //
@@ -174,63 +195,46 @@ function populateTestFormData(obj, path) {
     }
 
     //in this series of if-elseif, we account for all the compound and primitive types available in a JSON object: array,object (compound),
-    //and string,bool,number,null (primitive), and generate the initial testFormData object.
+    //and string,bool,number,null (primitive), and generate the initial testFormData entries.
     if (_.isObject(value)) {   //note that _.isObject will pass for both arrays and objects by design, and we rely on that behavior here:
-      testFormData.push({
-        currentFormData: {
-          propertyName: !path ? key : path + key,
-          condition: '.to.exist',
-          type: 'object',
-          enabled: true
-        }
-      });
+      let newFormEntry = { currentFormData: _.cloneDeep(defaultFormData.object) };
+      newFormEntry.currentFormData.propertyName = !path ? key : path + key;
+      testFormData.push(newFormEntry);
       //make recursive call to do the same for child entities of this array/object
       populateTestFormData(value, !path ? key : path + key)
     }
     else if (_.isString(value)) {
-      testFormData.push({
-        currentFormData: {
-          propertyName: !path ? key : path + key,
-          condition: '.to.equal',
-          type: 'string',
-          enabled: true,
-          propertyValue: value
-        }
-      });
+      let newFormEntry = { currentFormData: _.cloneDeep(defaultFormData.string) };
+      newFormEntry.currentFormData.propertyName = !path ? key : path + key;
+      newFormEntry.currentFormData.propertyValue = value;
+      testFormData.push(newFormEntry);
     }
     else if (_.isBoolean(value)) {
-      testFormData.push({
-        currentFormData: {
-          propertyName: !path ? key : path + key,
-          condition: '.to.be.' + value,
-          type: 'bool',
-          enabled: true
-        }
-      });
+      let newFormEntry = { currentFormData: _.cloneDeep(defaultFormData.bool) };
+      newFormEntry.currentFormData.propertyName = !path ? key : path + key;
+      newFormEntry.currentFormData.condition = '.to.be.' + value;
+      testFormData.push(newFormEntry);
     }
     else if (_.isNumber(value)) {
-      testFormData.push({
-        currentFormData: {
-          propertyName: !path ? key : path + key,
-          condition: '.to.equal',
-          type: 'number',
-          enabled: true,
-          propertyValue: value
-        }
-      });
+      let newFormEntry = { currentFormData: _.cloneDeep(defaultFormData.number) };
+      newFormEntry.currentFormData.propertyName = !path ? key : path + key;
+      newFormEntry.currentFormData.propertyValue = value;
+      testFormData.push(newFormEntry);
     }
+    //account for case where JSON contains a property with value 'null', in which case type cannot be inferred.
     else if (_.isNull(value)) {
-      testFormData.push({
-        currentFormData: {
-          propertyName: !path ? key : path + key,
-          condition: '.to.be.null',
-          type: 'null',
-          enabled: true
-        }
-      });
+      let newFormEntry = { currentFormData: _.cloneDeep(defaultFormData.null) };
+      newFormEntry.currentFormData.propertyName = !path ? key : path + key;
+      newFormEntry.currentFormData.condition = '.to.be.null';
+      testFormData.push(newFormEntry);
+    }
+    else {
+      throw 'Unexpected type encountered.  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
     }
   });
 }
+
+
 
 //generate chai assertions based on data in testFormData.  Generally this should not be called directly, but instead the debounced version should be called
 function generateChaiAssertions () {
@@ -240,38 +244,21 @@ function generateChaiAssertions () {
 
     if (formEntry.enabled === true) {
       if (_.includes(conditionsThatDoNotAcceptAProperty, formEntry.condition)) {
-        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
+        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(apiResponse' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
       }
-      //if string, wrap in quotes and escape any internal quotation marks
       else if (formEntry.type === 'string') {
-
-        //function to be used in tandem with string.replace in return statement below this function.   It defines the
-        //replacement logic (helps identify whether a quote mark was escaped or not when it was provided by the user)
-        //and appropriately escape the quote (or not).
-        function escapeQuotesInString(match, backslashes) {
-          // If the number of backslashes before the double quote is even, it's unescaped
-          if (backslashes.length % 2 === 0) {
-            // Escape the double quote
-            return backslashes + '\\"';
-          }
-          else {
-            // Leave the double quote as it is (part of an escape sequence)
-            return match;
-          }
-        }
-
-        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue.replace(/(\\*)(")/g, escapeQuotesInString) + '");' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue.replace(/(\\*)(")/g, escapeQuotesInString) + '");' + '\n});';
+        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\', () => {\n  pm.expect(apiResponse' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\n});';
       }
       //account for number
       else if (formEntry.type === 'number') {
-        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\', () => {\n  pm.expect(pm.response' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\n});';
+        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\', () => {\n  pm.expect(apiResponse' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\n});';
       }
       else {
-        throw 'Assertion not generated because we encountered a case our code logic did not account for.   Authors likely have a logic error.  Fix the code Postman!'
+        throw 'Assertion not generated.  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
       }
     }
   })
-  testJSEditor.setValue(_.join(_.without(chaiAssertions, undefined), '\n\n'))
+  testJSEditor.setValue('let apiResponse = pm.response.json();\n\n' + _.join(_.without(chaiAssertions, undefined), '\n\n'))
   testJSEditor.clearSelection()
 }
 
@@ -600,13 +587,21 @@ const defaultFormData = {
     condition: '.to.equal',
     propertyValue: 'sample string',
     enabled: true,
+    //regex to ensure all user-input quotation marks (") are escaped and that regex does not end in a lone \.
+    validationRegex: '^(?:[^\\\\\'"]|\\\\.)*$'
+
   },
   number: {
     type: 'number',
     propertyName: '',
     condition: '.to.equal',
     propertyValue: 12345,
-    enabled: true
+    enabled: true,
+    //the following commented out regex works last I checked.  I commented it out to implement my own version (currently
+    //in use) and kept the old one here in case I find out that my implemented one is flawed.
+    // validationRegex: '^[+\\-]?(\\d*\\.\\d+|\\d+\\.\\d*|\\d+)([eE][+\\-]?\\d+)?$'
+    //regex to ensure user-input is a valid number:
+    validationRegex: '^[+\\-]?(?:\\d*\\.\\d+|\\d+\\.\\d*|\\d+)(?:[eE][+\\-]?\\d+)?$'
   },
   bool: {
     type: 'bool',
