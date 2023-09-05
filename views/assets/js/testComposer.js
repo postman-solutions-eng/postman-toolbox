@@ -263,7 +263,6 @@ function populateTestFormData(obj, path) {
 
 //generate chai assertions based on data in testFormData.  Generally this should not be called directly, but instead the debounced version should be called
 function generateChaiAssertions () {
-  console.log(validationErrors)
   if (_.isEmpty(validationErrors)) {
     let chaiAssertions = _.map(testFormData, function (formEntry) {
       //change formEntry var to point to relevant data
