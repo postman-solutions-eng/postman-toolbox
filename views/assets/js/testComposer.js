@@ -1,13 +1,12 @@
 //data containers referenced across this entire component
 let testFormData = [];
 let tooltips = {};
+let validationErrors = {};
 
 // This function is the entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
 // this function populates the data structure upon which this entire page is reliant (testFormData array), generates the initial state of the
 // test composition form, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
 // of the chai assertions.
-
-//todo: decide on whether you are keeping the functionality that remembers old input for type switching.
 function handleJSONInput() {
   //reset testFormData field in case user uses this tool multiple times in a row
   testFormData = []
@@ -36,7 +35,7 @@ function handleJSONInput() {
   //the tests will be generated
   populateTestFormData(currentJSON);
 
-  //render template
+  //render template that contains initial state of the form.
   document.getElementById('testFormContainer').innerHTML = mainTemplate({items: testFormData});
 
   //The following section adds eventlisteners to the various DOM elements that make up the form and additionally sets
@@ -54,11 +53,50 @@ function handleJSONInput() {
     let propertyValueTextBox = document.getElementById('propertyValue' + index)
     let enabledSlider = document.getElementById('enabledSlider' + index)
 
-    //ADD EVENT LISTENERS TO THE TYPESELECT.  This select is not a true select, but rather using bootstrap's dropdown classes
+    //Define a function that validates the input of the propertyValueTextbox for use in event listeners.
+    //todo: in the future, it might be worth considering debouncing this validation logic.  Tabling for now though.
+    function validatePropertyValueTextBoxInput(){
+      if (formEntry.currentFormData.validationRegex &&   // validation regex is defined
+        !_.includes(conditionsThatDoNotAcceptAProperty, formEntry.currentFormData.condition) && //condition is one that actually takes a property to validate
+        !formEntry.currentFormData.validationRegex.test(propertyValueTextBox.value)) //and the property fails the regex
+      {
+        propertyValueTextBox.classList.add('is-invalid')
+        validationErrors[propertyValueTextBox.id] = true;
+        return 0;
+      }
+      else {
+        if (validationErrors[propertyValueTextBox.id]) { delete validationErrors[propertyValueTextBox.id] };
+        propertyValueTextBox.classList.remove('is-invalid')
+        return 1
+      }
+    }
+
+    // Define a function that validates the selected value in the conditionSelect.
+    // We check if the condition specified in the formEntry actually exists in the menu of options for that formEntry.
+    // It should only NOT exist when a user switches types (e.g. number to string) and had previously selected a condition
+    // that is not valid for the new type (e.g. 'greater than' to continue the previous example)
+    //todo: in the future, it might be worth considering debouncing this validation logic.  Tabling for now though.
+    function validateConditionSelect () {
+      let optionFound = _.find(conditionSelect.options, function (option) {
+        return option.value === formEntry.currentFormData.condition
+      })
+      if (!optionFound) {
+        validationErrors[conditionSelect.id] = true;
+        conditionSelect.classList.add('is-invalid');
+        return 0;
+      }
+      else {
+        if (validationErrors[conditionSelect.id]) { delete validationErrors[conditionSelect.id] };
+        conditionSelect.classList.remove('is-invalid')
+        return 1;
+      }
+    }
+
+    //ADD EVENT LISTENERS TO THE TYPESELECT.  This select is not a true select, but rather uses bootstrap's dropdown classes
     //to implement a "pseudo-select".   Every option in this "pseudo-select" is its own unique bootstrap "button" on which we
     //must setup event listeners.  I did it this way to take advantage of better formatting/styles available on buttons than on selects:
 
-    //for each button/option (i.e. bool, string, number, object/array)
+    //for each button (aka option in the pseudo-select.  e.g. bool, string, number, object/array)
     _.each(typeSelectOptions, function(option) {
 
       //add a click listener and invoke the enclosed function
@@ -67,71 +105,55 @@ function handleJSONInput() {
         propertyValueTextBox.classList.remove('is-invalid')
 
         //copy current form state so that it can be restored if user reverts back to the currently selected type (from type Select)
-        formEntry[formEntry.currentFormData.type + 'FormData'] = _.cloneDeep(formEntry.currentFormData)
-
-        //get enabled/disabled status of current form state so we can re-apply it to the new form state
-        //(enabled/disabled status is not intended to be remembered for future restoration).
-        let enabledStatus = formEntry.currentFormData.enabled
-
-        //restore form state of newly selected type if a stored form state exists
-        if (formEntry[option.value + 'FormData']) {
-          formEntry.currentFormData = formEntry[option.value + 'FormData']
-        }
-        //otherwise populate the form with some default/catch-all values (with the exception of the property name, which
-        //needs to be maintained)
-        else {
-          let propertyName = formEntry.currentFormData.propertyName
-          formEntry.currentFormData = _.cloneDeep(defaultFormData[option.value])
-          formEntry.currentFormData.propertyName = propertyName
-        }
-
-        //apply disabled/enabled state
-        formEntry.currentFormData.enabled = enabledStatus;
+        let oldFormData = _.cloneDeep(formEntry.currentFormData)
+        formEntry.currentFormData = _.cloneDeep(defaultFormData[option.value])
+        formEntry.currentFormData.propertyValue = oldFormData.propertyValue
+        formEntry.currentFormData.condition = oldFormData.condition
+        formEntry.currentFormData.propertyName = oldFormData.propertyName
+        formEntry.currentFormData.enabled = oldFormData.enabled
 
         //render the new form data to the screen
         renderFormEntry(index, formEntry)
+
+        //validate the fields since the type has been re-selected
+        validatePropertyValueTextBoxInput();
+        validateConditionSelect();
 
         //generate chai assertions based on current state
         debouncedGenerateChaiAssertions();
       })
     })
-    //ADD EVENT LISTENERS TO THE CONDITION SELECT
+    //ADD EVENT LISTENERS TO THE CONDITION SELECT.  In contrast to the above, this select is a true select
     conditionSelect.addEventListener('change', event => {
       //update testformdata data structure with newly selected value
       formEntry.currentFormData.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
       //render the new form data to the screen
       renderFormEntry(index, formEntry)
+
+      //validate the fields since the condition has been re-selected
+      validatePropertyValueTextBoxInput();
+      validateConditionSelect();
+
       //generate chai assertions based on current state
       debouncedGenerateChaiAssertions();
     })
 
-    //ADD EVENT LISTENERS TO THE VALUE INPUT TEXT BOX
-    //todo: invoke initial validation check (should always pass, but you never know).  validation below only happens on
-    // input.   invoke it after form is rendered as well.
+    //ADD EVENT LISTENERS TO THE VALUE INPUT BOX
     propertyValueTextBox.addEventListener('input', event => {
-
-      //associated validation regex with the input
-      propertyValueTextBox.setAttribute('pattern', formEntry.currentFormData.validationRegex)
-
-      if (!propertyValueTextBox.checkValidity()) {
-        propertyValueTextBox.classList.add('is-invalid')
-        return
-      }
-      else {
-        propertyValueTextBox.classList.remove('is-invalid')
-      }
-
 
       //update testformdata data structure with newly input value
       formEntry.currentFormData.propertyValue = propertyValueTextBox.value;
+
+      //check if input is valid, and if so save the val, and regenerate chai assertions and tooltips
+      validatePropertyValueTextBoxInput()
       //generate chai assertions based on current state
       debouncedGenerateChaiAssertions();
       //re-create tooltips in case the user input value is too large for the textbox
       propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
       debouncedRegisterTooltip('propertyValue' + index);
+
     })
 
-    //todo: decide upon and handle if necessary loading enabled/disabled status  from stored form data
     //ADD EVENT LISTENERS TO THE ENABLED/DISABLED SLIDER
     enabledSlider.addEventListener('click', event => {
       if (enabledSlider.checked) {
@@ -141,6 +163,9 @@ function handleJSONInput() {
       }
       debouncedGenerateChaiAssertions()
     })
+
+    //Render initial validation status of propertyValue
+    validatePropertyValueTextBoxInput()
 
     //create tooltips on elements where the value length is longer than the textbox displaying it
     registerTooltip('propertyValue' + index)
@@ -238,28 +263,33 @@ function populateTestFormData(obj, path) {
 
 //generate chai assertions based on data in testFormData.  Generally this should not be called directly, but instead the debounced version should be called
 function generateChaiAssertions () {
-  let chaiAssertions = _.map(testFormData, function (formEntry) {
-    //change point to point to relevant data
-    formEntry = formEntry.currentFormData
+  console.log(validationErrors)
+  if (_.isEmpty(validationErrors)) {
+    let chaiAssertions = _.map(testFormData, function (formEntry) {
+      //change formEntry var to point to relevant data
+      let formEntryData = formEntry.currentFormData
 
-    if (formEntry.enabled === true) {
-      if (_.includes(conditionsThatDoNotAcceptAProperty, formEntry.condition)) {
-        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + ';' + '\', () => {\n  pm.expect(apiResponse' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + ';' + '\n});';
+      if (formEntryData.enabled === true) {
+        if (_.includes(conditionsThatDoNotAcceptAProperty, formEntryData.condition)) {
+          return 'pm.test(\'' + 'expect(' + formEntryData.propertyName + ')' + formEntryData.condition + ';' + '\', () => {\n  pm.expect(apiResponse' + (formEntryData.propertyName.startsWith('[') ? '' : '.') + formEntryData.propertyName + ')' + formEntryData.condition + ';' + '\n});';
+        } else if (formEntryData.type === 'string') {
+          return 'pm.test(\'' + 'expect(' + formEntryData.propertyName + ')' + formEntryData.condition + '("' + formEntryData.propertyValue + '");' + '\', () => {\n  pm.expect(apiResponse' + (formEntryData.propertyName.startsWith('[') ? '' : '.') + formEntryData.propertyName + ')' + formEntryData.condition + '("' + formEntryData.propertyValue + '");' + '\n});';
+        }
+        //account for number
+        else if (formEntryData.type === 'number') {
+          return 'pm.test(\'' + 'expect(' + formEntryData.propertyName + ')' + formEntryData.condition + '(' + formEntryData.propertyValue + ');' + '\', () => {\n  pm.expect(apiResponse' + (formEntryData.propertyName.startsWith('[') ? '' : '.') + formEntryData.propertyName + ')' + formEntryData.condition + '(' + formEntryData.propertyValue + ');' + '\n});';
+        } else {
+          throw 'Assertion not generated.  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
+        }
       }
-      else if (formEntry.type === 'string') {
-        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\', () => {\n  pm.expect(apiResponse' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '("' + formEntry.propertyValue + '");' + '\n});';
-      }
-      //account for number
-      else if (formEntry.type === 'number') {
-        return 'pm.test(\'' + 'expect(' + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\', () => {\n  pm.expect(apiResponse' + (formEntry.propertyName.startsWith('[') ? '' : '.') + formEntry.propertyName + ')' + formEntry.condition + '(' + formEntry.propertyValue + ');' + '\n});';
-      }
-      else {
-        throw 'Assertion not generated.  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
-      }
-    }
-  })
-  testJSEditor.setValue('let apiResponse = pm.response.json();\n\n' + _.join(_.without(chaiAssertions, undefined), '\n\n'))
-  testJSEditor.clearSelection()
+    })
+    testJSEditor.setValue('let apiResponse = pm.response.json();\n\n' + _.join(_.without(chaiAssertions, undefined), '\n\n'))
+    testJSEditor.clearSelection()
+  }
+  else {
+    testJSEditor.setValue('//Please rectify all validation \n//errors present in the form \n//to the left')
+    testJSEditor.clearSelection()
+  }
 }
 
 //this function recreates tooltips for all elements that require it.   Intended to be
@@ -303,22 +333,20 @@ function renderFormEntry(index, formEntry) {
   let typeSelect = document.getElementById('typeSelect' + index)
   let conditionSelect = document.getElementById('conditionSelect' + index)
   let propertyValueTextBox = document.getElementById('propertyValue' + index)
-  let enabledSlider = document.getElementById('enabledSlider' + index)
-
 
   let buttonColorClass = _.filter(typeSelect.classList, function(singleClass) {
     return _.includes(singleClass, 'btn-outline-');
   })
-  if (buttonColorClass.length > 1) {throw 'expecting only single class'}
+  if (buttonColorClass.length > 1) {
+    throw 'Expecting only a single CSS class with prefix "btn-outline-".  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
+  }
   else {
     buttonColorClass = buttonColorClass[0]
   }
 
-  let formData = formEntry.currentFormData
-
-  typeSelect.innerHTML = ' ' + formData.type.substring(0,1) + ' ';
+  typeSelect.innerHTML = ' ' + formEntry.currentFormData.type.substring(0,1) + ' ';
   let newButtonColorStyle = '';
-  switch (formData.type) {
+  switch (formEntry.currentFormData.type) {
     case 'number':
       newButtonColorStyle = 'primary'
       break;
@@ -336,10 +364,10 @@ function renderFormEntry(index, formEntry) {
       break;
   }
   typeSelect.classList.replace(buttonColorClass, 'btn-outline-' + newButtonColorStyle);
-  conditionSelect.innerHTML=templates[formData.type + 'ConditionOptions']();
+  conditionSelect.innerHTML=templates[formEntry.currentFormData.type + 'ConditionOptions']();
   conditionSelect.value = formEntry.currentFormData.condition;
 
-  if (!_.includes(conditionsThatDoNotAcceptAProperty, formData.condition)) {
+  if (!_.includes(conditionsThatDoNotAcceptAProperty, formEntry.currentFormData.condition)) {
     propertyValueTextBox.value = formEntry.currentFormData.propertyValue
     propertyValueTextBox.removeAttribute('disabled')
   }
@@ -588,8 +616,7 @@ const defaultFormData = {
     propertyValue: 'sample string',
     enabled: true,
     //regex to ensure all user-input quotation marks (") are escaped and that regex does not end in a lone \.
-    validationRegex: '^(?:[^\\\\\'"]|\\\\.)*$'
-
+    validationRegex: /^(?:[^\\'"]|\\.)*$/
   },
   number: {
     type: 'number',
@@ -597,11 +624,8 @@ const defaultFormData = {
     condition: '.to.equal',
     propertyValue: 12345,
     enabled: true,
-    //the following commented out regex works last I checked.  I commented it out to implement my own version (currently
-    //in use) and kept the old one here in case I find out that my implemented one is flawed.
-    // validationRegex: '^[+\\-]?(\\d*\\.\\d+|\\d+\\.\\d*|\\d+)([eE][+\\-]?\\d+)?$'
     //regex to ensure user-input is a valid number:
-    validationRegex: '^[+\\-]?(?:\\d*\\.\\d+|\\d+\\.\\d*|\\d+)(?:[eE][+\\-]?\\d+)?$'
+    validationRegex: /^[-+]?(?:\d*\.\d+|\d+\.\d*|\d+)(?:[eE][-+]?\d+)?$/
   },
   bool: {
     type: 'bool',
