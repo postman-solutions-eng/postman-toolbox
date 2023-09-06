@@ -55,6 +55,9 @@ function handleJSONInput() {
 
     //Define a function that validates the input of the propertyValueTextbox for use in event listeners.
     //todo: in the future, it might be worth considering debouncing this validation logic.  Tabling for now though.
+    //todo: keep in mind that if you do debounce it, you will have to ensure that it finishes executing before subsequent
+    //todo: calls to debouncedGenerateChaiAssertions as these are both async calls.   (in all the event handlers, you invoke
+    //todo: the validation calls immediately before you call debouncedGenerateChaiAssertions)
     function validatePropertyValueTextBoxInput(){
       if (formEntry.currentFormData.validationRegex &&   // validation regex is defined
         !_.includes(conditionsThatDoNotAcceptAProperty, formEntry.currentFormData.condition) && //condition is one that actually takes a property to validate
@@ -77,6 +80,9 @@ function handleJSONInput() {
     // It should only NOT exist when a user switches types (e.g. number to string) and had previously selected a condition
     // that is not valid for the new type (e.g. 'greater than' to continue the previous example)
     //todo: in the future, it might be worth considering debouncing this validation logic.  Tabling for now though.
+    //todo: keep in mind that if you do debounce it, you will have to ensure that it finishes executing before subsequent
+    //todo: calls to debouncedGenerateChaiAssertions as these are both async calls.   (in all the event handlers, you invoke
+    //todo: the validation calls immediately before you call debouncedGenerateChaiAssertions)
     function validateConditionSelect () {
       let optionFound = _.find(conditionSelect.options, function (option) {
         return option.value === formEntry.currentFormData.condition
@@ -151,18 +157,27 @@ function handleJSONInput() {
       //update testformdata data structure with newly input value
       formEntry.currentFormData.propertyValue = propertyValueTextBox.value;
 
+      //generate validate input and generate appropriate tooltip:
       //check if input is valid
-      validatePropertyValueTextBoxInput()
-      //generate chai assertions based on current state
+      if (validatePropertyValueTextBoxInput()) {
+        //update tooltiptext
+        propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
+        //register tooltip
+        debouncedRegisterTooltip('propertyValue' + index);
+      }
+      //input is not valid
+      else {
+        //generate an appropriate tooltip reflecting the reason for the validation error
+        if (formEntry.currentFormData.validationErrorMessage) {
+          propertyValueTextBox.parentNode.setAttribute('data-bs-title', formEntry.currentFormData.validationErrorMessage);
+          debouncedRegisterTooltip('propertyValue' + index, true);
+        }
+        else {
+          throw 'Encountered type without Validation Error Message.  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
+        }
+      }
+      // generate chai assertions based on current state
       debouncedGenerateChaiAssertions();
-      //re-create tooltips in case the user input value is too large for the textbox
-      propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
-
-
-      
-
-      debouncedRegisterTooltip('propertyValue' + index);
-
     })
 
     //ADD EVENT LISTENERS TO THE ENABLED/DISABLED SLIDER
@@ -191,7 +206,7 @@ function handleJSONInput() {
 //recursive function that generates the initial state of the form based on the JSON payload provided by the user.  This
 //function is intended to be run only when the JSON input is changed.
 function populateTestFormData(obj, path) {
-  _.each(obj, function (value, key) {
+  _.forEach(obj, function (value, key) {
     // Javascript allows you to index to entries in both javascript objects and arrays (where the keys are explicitly strings or
     // integers respectively) using bracket notation where the key is passed in EITHER as a number or a string.  JS does thos
     // via type coercion.
@@ -320,7 +335,7 @@ function registerTooltips () {
 }
 
 //this function registers (or re-registers) a single tooltip when provided the id of the tooltip
-function registerTooltip(id) {
+function registerTooltip(id, force) {
   //cleanly destroy existing tooltip
   if (tooltips[id]) {
     tooltips[id].dispose()
@@ -334,8 +349,13 @@ function registerTooltip(id) {
   // on the textbox or on the containing element, I just decided to ALWAYS put it on the containing/parent element
   let parentElement = elementThatNeedsToolTip.parentNode;
   //check if node actually needs a tooltip
-  if (elementThatNeedsToolTip.scrollWidth > elementThatNeedsToolTip.offsetWidth) {
+  if (force) {
     tooltips[id] = new bootstrap.Tooltip(parentElement)
+  }
+  else {
+    if (elementThatNeedsToolTip.scrollWidth > elementThatNeedsToolTip.offsetWidth) {
+      tooltips[id] = new bootstrap.Tooltip(parentElement)
+    }
   }
 }
 
@@ -638,7 +658,8 @@ const defaultFormData = {
     propertyValue: 'sample string',
     enabled: true,
     //regex to ensure all user-input quotation marks (") are escaped and that regex does not end in a lone \.
-    validationRegex: /^(?:[^\\'"]|\\.)*$/
+    validationRegex: /^(?:[^\\'"]|\\.)*$/,
+    validationErrorMessage: 'Not a valid string.  The characters ", \', \\ must be escaped with a \'\\\'.'
   },
   number: {
     type: 'number',
@@ -647,7 +668,8 @@ const defaultFormData = {
     propertyValue: 12345,
     enabled: true,
     //regex to ensure user-input is a valid number:
-    validationRegex: /^[-+]?(?:\d*\.\d+|\d+\.\d*|\d+)(?:[eE][-+]?\d+)?$/
+    validationRegex: /^[-+]?(?:\d*\.\d+|\d+\.\d*|\d+)(?:[eE][-+]?\d+)?$/,
+    validationErrorMessage: 'Not a valid number.'
   },
   bool: {
     type: 'bool',
