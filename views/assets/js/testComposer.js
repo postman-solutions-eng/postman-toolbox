@@ -75,7 +75,7 @@ function handleJSONInput() {
       }
     }
 
-    // Define a function that validates the selected value in the conditionSelect.
+    // Define a function that validates the selected value in the conditionSelect for use in event handlers.
     // We check if the condition specified in the formEntry actually exists in the menu of options for that formEntry.
     // It should only NOT exist when a user switches types (e.g. number to string) and had previously selected a condition
     // that is not valid for the new type (e.g. 'greater than' to continue the previous example)
@@ -157,7 +157,7 @@ function handleJSONInput() {
       //update testformdata data structure with newly input value
       formEntry.currentFormData.propertyValue = propertyValueTextBox.value;
 
-      //generate validate input and generate appropriate tooltip:
+      //validate input and generate appropriate tooltip:
       //check if input is valid
       if (validatePropertyValueTextBoxInput()) {
         //update tooltiptext
@@ -348,10 +348,12 @@ function registerTooltip(id, force) {
   // textbox is disabled to prevent user input, and rather than implement logic to selectively define if we put the tooltip
   // on the textbox or on the containing element, I just decided to ALWAYS put it on the containing/parent element
   let parentElement = elementThatNeedsToolTip.parentNode;
-  //check if node actually needs a tooltip
+
+  //if force = true, then always create tooltip
   if (force) {
     tooltips[id] = new bootstrap.Tooltip(parentElement)
   }
+  //otherwise check if node actually needs a tooltip (aka value in textbox is longer than textbox itself)
   else {
     if (elementThatNeedsToolTip.scrollWidth > elementThatNeedsToolTip.offsetWidth) {
       tooltips[id] = new bootstrap.Tooltip(parentElement)
@@ -367,14 +369,14 @@ function renderFormEntry(index, formEntry) {
   let buttonColorClass = _.filter(typeSelect.classList, function(singleClass) {
     return _.includes(singleClass, 'btn-outline-');
   })
-  if (buttonColorClass.length > 1) {
-    throw 'Expecting only a single CSS class with prefix "btn-outline-".  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
+  if (buttonColorClass.length !== 1) {
+    throw 'Expecting a single CSS class with prefix "btn-outline-".  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
   }
   else {
     buttonColorClass = buttonColorClass[0]
   }
 
-  typeSelect.innerHTML = ' ' + formEntry.currentFormData.type.substring(0,1) + ' ';
+  typeSelect.innerHTML = ' ' + formEntry.currentFormData.type.substring(0, 1) + ' ';
   let newButtonColorStyle = '';
   switch (formEntry.currentFormData.type) {
     case 'number':
