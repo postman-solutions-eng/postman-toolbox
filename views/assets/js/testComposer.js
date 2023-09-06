@@ -158,7 +158,9 @@ function handleJSONInput() {
       //re-create tooltips in case the user input value is too large for the textbox
       propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
 
+
       
+
       debouncedRegisterTooltip('propertyValue' + index);
 
     })
@@ -385,9 +387,13 @@ function renderFormEntry(index, formEntry) {
   }
 }
 
+
+
 ///////////////////////////////////////////
 // Initialization - Setup/Config Section //
 ///////////////////////////////////////////
+
+
 
 //Initialize/Config ACE Editors
 ace.require('ace/ext/language_tools')
@@ -433,9 +439,13 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
 });
 
+
+
 ///////////////////////////////////////////////////
 // Initialization - Templates/Handlebars Section //
 ///////////////////////////////////////////////////
+
+
 
 //Register several partial templates so that they can be referenced in other templates.  Similarly, compile them so they
 //can be invoked/called from JS code.
@@ -499,7 +509,7 @@ Handlebars.registerHelper('conditionalRender', function(...args) {
   let contextValue = args[0];
   //second through second-to-last parmater are the valid possible values for the value we are checking
   let validValues = args.slice(1,-1);
-  //last paramter is the handlebars-passed options object that we rely upon
+  //last paramter is the handlebars-passed 'options' object that we rely upon
   let options = args[args.length - 1]
 
   if (_.includes(validValues, contextValue)) {
@@ -603,9 +613,13 @@ let mainTemplate = Handlebars.compile("\
   {{/each}}\
 ");
 
+
+
 ///////////////////////////////////////
 // Utility Functions/Objects Section //
 ///////////////////////////////////////
+
+
 
 const conditionsThatDoNotAcceptAProperty = [
   '.to.exist',
@@ -655,7 +669,7 @@ const defaultFormData = {
   }
 }
 
-//function to test keys in JSON object so we can know if out chai assertions can reference them via . notation, or we
+//function to test keys in JSON object so we can know if our chai assertions can reference them via . notation, or we
 //must resort to [] notation.  JS documentation says that . notation must use valid identifiers the characteristics of which
 //are comprehended in this regex.
 function isValidIdentifier(key) {
