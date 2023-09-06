@@ -452,11 +452,31 @@ resizeObserver.observe(document.getElementById('testFormContainer'));
 //Register Event Listeners for JSONEditor so that we can regenerate the testform when user inputs new JSON
 jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 
+
 //invoke initial functionality once the page loads
 document.addEventListener('DOMContentLoaded', function() {
   handleJSONInput()
   //change left panel button styles to indicate active page
   document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
+
+  //setup master enable button
+  let masterEnableSlider = document.getElementById('masterEnable')
+  masterEnableSlider.addEventListener('click', (event) => {
+
+    if (masterEnableSlider.checked) {
+      _.forEach(testFormData, (formEntry, index) => {
+        formEntry.currentFormData.enabled = true
+        document.getElementById('enabledSlider' + index).checked = true;
+      })
+    }
+    else {
+      _.forEach(testFormData, (formEntry, index)  => {
+        formEntry.currentFormData.enabled = false
+        document.getElementById('enabledSlider' + index).checked = false;
+      })
+    }
+    debouncedGenerateChaiAssertions()
+  })
 });
 
 
@@ -556,8 +576,10 @@ let mainTemplate = Handlebars.compile("\
     <div class='col-4 ps-0' style='font-size: 0.8rem;'>\
       Value\
     </div>\
-    <div class='col-1 ps-0' style='font-size: 0.8rem;'>\
-      Enable\
+    <div class='col-1 ps-0'>\
+      <div class='form-switch'>\
+        <input class='form-check-input' type='checkbox' id='masterEnable' checked>\
+      </div>\
     </div>\
   </div>\
   {{#each items}}\
