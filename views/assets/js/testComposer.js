@@ -5,7 +5,7 @@ let validationErrors = {};
 
 // This function is the entry point of functionality for the Test Composer.   Upon a user entering valid JSON,
 // this function populates the data structure upon which this entire page is reliant (testFormData array), generates the initial state of the
-// test composition form, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
+// test composition form GUI, registers event listeners and tooltips upon the various fields within that form, and invokes the generation
 // of the chai assertions.
 function handleJSONInput() {
   //reset testFormData field in case user uses this tool multiple times in a row
@@ -61,6 +61,7 @@ function handleJSONInput() {
         !formEntry.currentFormData.validationRegex.test(propertyValueTextBox.value)) //and the property fails the regex
       {
         propertyValueTextBox.classList.add('is-invalid')
+
         validationErrors[propertyValueTextBox.id] = true;
         return 0;
       }
@@ -104,9 +105,13 @@ function handleJSONInput() {
         //remove styles that may have been applied elsewhere in code
         propertyValueTextBox.classList.remove('is-invalid')
 
-        //copy current form state so that it can be restored if user reverts back to the currently selected type (from type Select)
+        //copy old data for reference
         let oldFormData = _.cloneDeep(formEntry.currentFormData)
+
+        //populate with new data (from defaults constants)
         formEntry.currentFormData = _.cloneDeep(defaultFormData[option.value])
+
+        //override defaults with values from the old data where applicable
         formEntry.currentFormData.propertyValue = oldFormData.propertyValue
         formEntry.currentFormData.condition = oldFormData.condition
         formEntry.currentFormData.propertyName = oldFormData.propertyName
@@ -115,7 +120,7 @@ function handleJSONInput() {
         //render the new form data to the screen
         renderFormEntry(index, formEntry)
 
-        //validate the fields since the type has been re-selected
+        //validate the form fields since the type has been re-selected
         validatePropertyValueTextBoxInput();
         validateConditionSelect();
 
@@ -123,10 +128,12 @@ function handleJSONInput() {
         debouncedGenerateChaiAssertions();
       })
     })
+
     //ADD EVENT LISTENERS TO THE CONDITION SELECT.  In contrast to the above, this select is a true select
     conditionSelect.addEventListener('change', event => {
       //update testformdata data structure with newly selected value
       formEntry.currentFormData.condition = conditionSelect.options[conditionSelect.selectedIndex].value;
+
       //render the new form data to the screen
       renderFormEntry(index, formEntry)
 
@@ -144,12 +151,14 @@ function handleJSONInput() {
       //update testformdata data structure with newly input value
       formEntry.currentFormData.propertyValue = propertyValueTextBox.value;
 
-      //check if input is valid, and if so save the val, and regenerate chai assertions and tooltips
+      //check if input is valid
       validatePropertyValueTextBoxInput()
       //generate chai assertions based on current state
       debouncedGenerateChaiAssertions();
       //re-create tooltips in case the user input value is too large for the textbox
       propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
+
+      
       debouncedRegisterTooltip('propertyValue' + index);
 
     })
