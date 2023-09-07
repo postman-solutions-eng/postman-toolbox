@@ -1,7 +1,7 @@
 <html data-bs-theme="dark">
 
 <head>
-  <title>Postman Companion</title>
+  <title>Postman Toolbox</title>
   <!-- CSS only -->
   <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css' rel='stylesheet'
     integrity='sha512-Z/def5z5u2aR89OuzYcxmDJ0Bnd5V1cKqBEbvLOiUNWdg9PQeXVvXLI90SE4QOHGlfLqUnDNVAYyZi8UwUTmWQ=='
@@ -46,23 +46,11 @@
 
 <body>
   <div class='container-fluid'>
-    <div class="row">
+    <div class="row" >
       {{> nav}}
     </div>
     <div class="row">
-      <div class="col-1 border-end border-light">
-        <a href="/governancePlayground">
-          <button type="button" class="btn btn-outline-light btn-block" id="governancePlaygroundButton">
-            Governance Rules Playground
-          </button>
-        </a>
-        <a href="/testComposer">
-          <button type="button" class="btn btn-outline-light btn-block" id="testComposerButton">
-            Visual Test Composer
-          </button>
-        </a>
-      </div>
-      <div class="col-11">
+      <div class="col-12">
         {{> modals}}
         {{{body}}}
       </div>

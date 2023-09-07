@@ -458,9 +458,6 @@ jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 //invoke initial functionality once the page loads
 document.addEventListener('DOMContentLoaded', function() {
   handleJSONInput()
-  //change left panel button styles to indicate active page
-  document.getElementById('testComposerButton').classList.replace('btn-outline-light', 'btn-light');
-
   //setup master enable button
   let masterEnableSlider = document.getElementById('masterEnable')
   masterEnableSlider.addEventListener('click', (event) => {

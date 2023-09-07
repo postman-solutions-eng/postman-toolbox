@@ -10,40 +10,6 @@ p {
   margin-bottom: 2px;
 }
 
-button {
-  /* NOTE TO JORDAN:  This class does not seem to be used anywhere (or perhaps not used *anymore*... maybe it was used at one time
-  and my changes resulted in its elimination.)   Can it be removed?   Additional details: so far we are relying on bootstraps
-  buttons which are assigned via various "btn-*" classes as opposed to a "button" class*/
-  margin-bottom: 20px;
-}
-
-pre {
-  /* NOTE TO JORDAN: I would like to remove this class, as at least on the surface, it doesnt feel like its doing anything.
-  The <pre> tag is only used on the ACE editors and they scroll by default on overflow.   However, this change is just a
-  preference and wasn't something I needed to do to make/fix something that was broken as a result of all my additions.
-  In other words, let me know if you had a specific reason for including this or if it can be cleaned up.*/
-  overflow: scroll;
-}
-
-pre[class*='language-'] {
-  /* NOTE TO JORDAN: I would like to remove this class, as at least on the surface, it doesnt feel like its doing anything.
-  The <pre> tag is only used on the ACE editors and they scroll by default on overflow.   However, this change is just a
-  preference and wasn't something I needed to do to make/fix something that was broken as a result of all my additions.
-  In other words, let me know if you had a specific reason for including this or if it can be cleaned up.*/
-  margin-top: 2px;
-}
-
-.copy {
-  /* NOTE TO JORDAN:  This class does not seem to be used anywhere (or perhaps not used *anymore*... maybe it was used at one time
-  and my changes resulted in its elimination.)   Can it be removed? */
-  position: absolute;
-  right: 40px;
-  background-color: gray;
-  padding: 2px 5px;
-  cursor: pointer;
-  display: none;
-}
-
 #spectralRule,
 #openApiSpec,
 #spectralCustomFunctions {
@@ -54,21 +20,6 @@ pre[class*='language-'] {
   bottom: 0;
   left: 0;
   font-size: 1em;
-}
-
-.info p {
-  /* NOTE TO JORDAN:  This class does not seem to be used anywhere (or perhaps not used *anymore*... maybe it was used at one time
-  and my changes resulted in its elimination.)   Can it be removed? */
-  margin-top: 10px;
-  font-size: 1em;
-}
-
-.info,
-h3,
-h4 {
-  /* NOTE TO JORDAN:  This class does not seem to be used anywhere (or perhaps not used *anymore*... maybe it was used at one time
-  and my changes resulted in its elimination.)   Can it be removed? */
-  margin-top: 15px;
 }
 
 .resultTable,

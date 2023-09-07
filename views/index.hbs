@@ -1,20 +1,38 @@
-<nav class="navbar navbar-expand-lg navbar-dark">
-  <div class="navbar-brand">Select a tool to the left to get started!</div>
-  <div class="collapse navbar-collapse" id="navbarText">
-    <span class="navbar-text ms-auto">
-<!--      <a class="infolink" data-bs-toggle="modal" data-bs-target="#infoModal" href="#" ></a>-->
-    </span>
-  </div>
-</nav>
-<div class="row">
-  <div class="col-12">
-    <div class="row">
-      <div class="col-4 mt-3">
-      </div>
-      <div class="col-4 mt-3">
-      </div>
-      <div class="col-4 mt-3">
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="pricing-header p-3 pb-md-4 mt-5 mx-auto text-center">
+        <h1 class="display-4 fw-normal text-body-emphasis">Postman Toolbox</h1>
+        <p class="fs-5 text-body-secondary">A library of tools built by the Postman Field Services team to help overcome
+          common pain points.</p>
       </div>
     </div>
+  </div>
+  <div class="row">
+    <div class="col-6 mb-3 text-center">
+      <div class="card mb-4 rounded-3 shadow-sm">
+        <div class="card-header py-3">
+          <h4 class="my-0 fw-normal">Governance Rules Playground</h4>
+        </div>
+        <div class="card-body text-left">
+          <p class="pb-3">The Governance Rules Playground helps you write custom Spectral rules and validate these against your OpenAPI JSON or YAML documents.</p>
+          <p>The validation process will return the elements in the API spec that are being validated (using JSONPath Plus) as well as the result of the Spectral validation.</p>
+          <a class="w-100 mt-4 btn btn-lg btn-primary" href="/governancePlayground">Access the Governance Playground &rarr;</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 mb-3 text-center">
+      <div class="card mb-4 rounded-3 shadow-sm">
+        <div class="card-header py-3">
+          <h4 class="my-0 fw-normal">Visual Test Composer</h4>
+        </div>
+        <div class="card-body">
+          <p class="pb-3">The Visual Test Composer helps you generate tests via a handy GUI. Provide a valid JSON payload and automatically generate tests in Postman's test syntax. </p>
+          <p>As you update the payload the tests will be dynamically updated. Once you're done, simply copy and paste the generated tests back into Postman.</p>
+          <a class="w-100 mt-4 btn btn-lg btn-primary" href="/testComposer">Visual Test Composer &rarr;</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
