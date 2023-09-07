@@ -1,12 +1,20 @@
 {
-  "name": "governance-rules-playground",
+  "name": "postman-toolbox",
   "version": "0.0.1",
-  "description": "Playground to check spectral rules against an OpenAPI spec.",
+  "description": "A library of tools built by the Postman field services team to help overcome common pain points.",
   "main": "app.js",
   "scripts": {
     "test": "mocha"
   },
-  "author": "Jordan Walsh (jordan.walsh@postman.com)",
+  "contributors": [
+    {
+      "name": "Jordan Walsh",
+      "email": "jordan.walsh@postman.com"
+    },{
+      "name": "Grey Schober",
+      "email": "grey.schober@postman.com"
+    }
+  ],
   "license": "MIT",
   "dependencies": {
     "@stoplight/spectral-core": "^1.18.3",
