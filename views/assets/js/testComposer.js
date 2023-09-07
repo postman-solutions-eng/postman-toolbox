@@ -478,24 +478,6 @@ jsonEditor.getSession().on('change', debouncedHandleJSONInput)
 //invoke initial functionality once the page loads
 document.addEventListener('DOMContentLoaded', function() {
   handleJSONInput()
-  //setup master enable button
-  let masterEnableSlider = document.getElementById('masterEnable')
-  masterEnableSlider.addEventListener('click', (event) => {
-
-    if (masterEnableSlider.checked) {
-      _.forEach(testFormData, (formEntry, index) => {
-        formEntry.currentFormData.enabled = true
-        document.getElementById('enabledSlider' + index).checked = true;
-      })
-    }
-    else {
-      _.forEach(testFormData, (formEntry, index)  => {
-        formEntry.currentFormData.enabled = false
-        document.getElementById('enabledSlider' + index).checked = false;
-      })
-    }
-    debouncedGenerateChaiAssertions()
-  })
 });
 
 
