@@ -54,13 +54,15 @@ app.use((req, res, next) => {
 // render the main.hbs layout and the index.hbs file
 app.get('/', (req, res) => {
   res.render('index');
+  console.log(new Date(), 'Index - Page View.')
 });
 app.get('/governancePlayground', (req, res) => {
   res.render('governancePlayground');
+  console.log(new Date(), 'Governance Playground - Page View.')
 });
 app.get('/testComposer', (req, res) => {
   res.render('testComposer');
-  console.log('Test Composer accessed');
+  console.log(new Date(), 'Test Composer - Page View.')
 });
 
 app.set('trust proxy', 1)
@@ -148,7 +150,7 @@ app.post('/validate', (req, res) => {
 })
 
 app.listen(3001, () => {
-  console.log(new Date(), 'Governance Rules Playground listening on port 3001!')
+  console.log(new Date(), 'Postman Toolbox listening on port 3001!')
 })
 
 module.exports = app;

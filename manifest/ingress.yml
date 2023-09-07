@@ -10,18 +10,18 @@ metadata:
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-2:005904641462:certificate/9e5d08a4-6904-4c82-85f7-5d45284ab27c
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80, "HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-  name: governance-rules-playground-ingress
+  name: postman-toolbox-ingress
 spec:
   rules:
-    - host: governance-rules-playground.postmansolutions.com
+    - host: postman-toolbox.postmansolutions.com
       http:
         paths:
           - backend:
               service:
-                name: governance-rules-playground
+                name: postman-toolbox
                 port:
                   number: 80
             pathType: ImplementationSpecific
   tls:
     - hosts:
-        - governance-rules-playground.postmansolutions.com
+        - postman-toolbox.postmansolutions.com

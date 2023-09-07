@@ -1,18 +1,18 @@
-# Postman Companion
+# Postman Toolbox
 
 <a href="https://project-types.github.io/#toy">
   <img src="https://img.shields.io/badge/project%20type-toy-blue" alt="Toy Badge"/>
 </a> <a href="https://www.repostatus.org/#concept"><img src="https://www.repostatus.org/badges/latest/concept.svg" alt="Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept." /></a>
-<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground.svg?type=shield"/></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fpostman-toolbox?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fpostman-toolbox.svg?type=shield"/></a>
 
 ## Table of Contents
-1. <a href="https://github.com/postman-solutions-eng/governance-rules-playground#governance-rules-playground">Governace Rules Playground Documentation</a>
-2. <a href="https://github.com/postman-solutions-eng/governance-rules-playground#visual-test-composer">Visual Test Composer Documentation</a>
+1. <a href="https://github.com/postman-solutions-eng/postman-toolbox#postman-toolbox">Governace Rules Playground Documentation</a>
+2. <a href="https://github.com/postman-solutions-eng/postman-toolbox#visual-test-composer">Visual Test Composer Documentation</a>
 
 ## Governance Rules Playground
 
 ### Sample App
-The tool is available for use at https://governance-rules-playground.postmansolutions.com/
+The tool is available for use at https://postman-toolbox.postmansolutions.com/
 
 Use this tool to validate your API spec (OAS/AsyncAPI) against a series of Spectral rules.
 
@@ -73,7 +73,7 @@ sandbox (no need to overcome difficulties with importing external libraries)
         
 ### Bugs/Issues/Feedback
 The source code for this project is available on
-<a href='https://github.com/postman-solutions-eng/governance-rules-playground/issues' target='_blank'>Github</a>.  
+<a href='https://github.com/postman-solutions-eng/postman-toolbox/issues' target='_blank'>Github</a>.  
 Please raise an issue there or feel free to submit a PR.  Support for this tool is provided on a best-effort basis.  
 **Importantly,** this tool is not officially supported by Postman Inc. and was written by members of our Solutions 
 team to enable and support our customers as much as we are able, but does not have the weight of the entire Postman 
@@ -87,5 +87,5 @@ information, or chai assertions leave the web browser unless said action is expl
 
 See <a href="./LICENSE">LICENSE</a>.
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fgovernance-rules-playground?ref=badge_large)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fpostman-toolbox.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fpostman-toolbox?ref=badge_large)
 
