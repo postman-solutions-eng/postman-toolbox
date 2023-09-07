@@ -38,11 +38,31 @@ function handleJSONInput() {
   //render template that contains initial state of the form.
   document.getElementById('testFormContainer').innerHTML = mainTemplate({items: testFormData});
 
+
   //The following section adds eventlisteners to the various DOM elements that make up the form and additionally sets
   //an initial tooltip on the text fields where the initial value is longer than the textbox containing it.
   //Each one of the aforementioned event listeners manipulates the testFormData data structure
   //and then relies on a call to renderFormEntry() to change the DOM elements to reflect the changes made to the
   //datastructure
+
+  //setup master enable button handler
+  let masterEnableSlider = document.getElementById('masterEnable')
+  masterEnableSlider.addEventListener('click', (event) => {
+
+    if (masterEnableSlider.checked) {
+      _.forEach(testFormData, (formEntry, index) => {
+        formEntry.currentFormData.enabled = true
+        document.getElementById('enabledSlider' + index).checked = true;
+      })
+    }
+    else {
+      _.forEach(testFormData, (formEntry, index)  => {
+        formEntry.currentFormData.enabled = false
+        document.getElementById('enabledSlider' + index).checked = false;
+      })
+    }
+    debouncedGenerateChaiAssertions()
+  })
 
   //for each testForm row/entry
   _.forEach(testFormData, function(formEntry, index) {
