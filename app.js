@@ -56,12 +56,12 @@ app.get('/', (req, res) => {
   res.render('index');
   console.log(new Date(), 'Index - Page View.')
 });
-app.get('/governancePlayground', (req, res) => {
-  res.render('governancePlayground');
+app.get('/governance-playground', (req, res) => {
+  res.render('governance-playground');
   console.log(new Date(), 'Governance Playground - Page View.')
 });
-app.get('/testComposer', (req, res) => {
-  res.render('testComposer');
+app.get('/test-composer', (req, res) => {
+  res.render('test-composer');
   console.log(new Date(), 'Test Composer - Page View.')
 });
 
