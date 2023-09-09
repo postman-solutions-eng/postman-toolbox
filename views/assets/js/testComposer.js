@@ -15,7 +15,9 @@ function handleJSONInput() {
     currentJSON = JSON.parse(jsonEditor.getValue())
   }
   catch (e) {
-    document.getElementById('testFormContainer').innerHTML = "Invalid JSON.   Please provide a valid JSON document";
+    document.getElementById('testFormContainer').innerHTML = "Invalid JSON.   Please provide a valid JSON document in the editor pane to the left";
+    testJSEditor.setValue('//Invalid JSON document.\n//Please provide a valid JSON document\n//in the far-left editor pane.')
+    testJSEditor.clearSelection()
     return
   }
 
