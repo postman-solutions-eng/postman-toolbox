@@ -81,18 +81,31 @@ function handleJSONInput() {
     //todo: calls to debouncedGenerateChaiAssertions as these are both async calls.   (in all the event handlers, you invoke
     //todo: the validation calls immediately before you call debouncedGenerateChaiAssertions)
     function validatePropertyValueTextBoxInput(){
+
       if (formEntry.currentFormData.validationRegex &&   // validation regex is defined
         !_.includes(conditionsThatDoNotAcceptAProperty, formEntry.currentFormData.condition) && //condition is one that actually takes a property to validate
         !formEntry.currentFormData.validationRegex.test(propertyValueTextBox.value)) //and the property fails the regex
       {
         propertyValueTextBox.classList.add('is-invalid')
-
         validationErrors[propertyValueTextBox.id] = true;
+        //generate an appropriate tooltip reflecting the reason for the validation error
+        if (formEntry.currentFormData.validationErrorMessage) {
+          propertyValueTextBox.parentNode.setAttribute('data-bs-title', formEntry.currentFormData.validationErrorMessage);
+          debouncedRegisterTooltip('propertyValue' + index, true);
+        }
+        else {
+          throw 'Encountered type without Validation Error Message.  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
+        }
+
         return 0;
       }
       else {
-        if (validationErrors[propertyValueTextBox.id]) { delete validationErrors[propertyValueTextBox.id] };
         propertyValueTextBox.classList.remove('is-invalid')
+        if (validationErrors[propertyValueTextBox.id]) { delete validationErrors[propertyValueTextBox.id] };
+        //update tooltiptext
+        propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
+        //register tooltip
+        debouncedRegisterTooltip('propertyValue' + index);
         return 1
       }
     }
@@ -181,23 +194,7 @@ function handleJSONInput() {
 
       //validate input and generate appropriate tooltip:
       //check if input is valid
-      if (validatePropertyValueTextBoxInput()) {
-        //update tooltiptext
-        propertyValueTextBox.parentNode.setAttribute('data-bs-title', propertyValueTextBox.value);
-        //register tooltip
-        debouncedRegisterTooltip('propertyValue' + index);
-      }
-      //input is not valid
-      else {
-        //generate an appropriate tooltip reflecting the reason for the validation error
-        if (formEntry.currentFormData.validationErrorMessage) {
-          propertyValueTextBox.parentNode.setAttribute('data-bs-title', formEntry.currentFormData.validationErrorMessage);
-          debouncedRegisterTooltip('propertyValue' + index, true);
-        }
-        else {
-          throw 'Encountered type without Validation Error Message.  This block of code should never be reached.  Code encountered a case that the developers did not account for.  Fix the code Postman!';
-        }
-      }
+      validatePropertyValueTextBoxInput()
       // generate chai assertions based on current state
       debouncedGenerateChaiAssertions();
     })
