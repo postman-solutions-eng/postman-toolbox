@@ -56,6 +56,12 @@ app.get('/', (req, res) => {
   res.render('index');
   console.log(new Date(), 'Index - Page View.')
 });
+
+// redirect when there is a trailing slash - was causing issues with relative paths.
+app.get('\\S+\/$', function (req, res) {
+  return res.redirect(301, req.path.slice(0, -1) + req.url.slice(req.path.length));
+});
+
 app.get('/governance-playground', (req, res) => {
   res.render('governance-playground');
   console.log(new Date(), 'Governance Playground - Page View.')
