@@ -16,11 +16,8 @@ const apiLimiter = rateLimit({
 	},
 })
 
-const { Configuration, OpenAIApi } = require('openai')
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
-})
-const openai = new OpenAIApi(configuration)
+const { OpenAI } = require('openai')
+const openai = new OpenAI()
 
 let app = express()
 let hbs = exphbs.create({
@@ -83,8 +80,7 @@ app.post('/api/generate', express.json(), (req, res) => {
       error: 'No prompt provided.'
     })
   } else {
-    openai
-      .createChatCompletion({
+    openai.chat.completions.create({
         model: "gpt-3.5-turbo-16k-0613",
         messages: [
           {
@@ -98,20 +94,19 @@ app.post('/api/generate', express.json(), (req, res) => {
         ]
       })
       .then(aiResponse => {
-        if(aiResponse && aiResponse.data && aiResponse.data.choices && aiResponse.data.choices.length > 0) {
+        if(aiResponse && aiResponse.choices && aiResponse.choices.length > 0) {
 
           let unknownResponse = "Sorry I do not know the answer.";
 
-          if(aiResponse.data.choices[0].message.content == unknownResponse) {
+          if(aiResponse.choices[0].message.content == unknownResponse) {
             console.log(new Date(), 'AI Unknown - AI returned the unknown response.')
           } else {
             console.log(new Date(), 'AI Success - Prompt worked as expected.')
           }
 
-
           //We have a choice for the response
           res.status(200).json({
-            result: aiResponse.data.choices[0]
+            result: aiResponse.choices[0]
           })
         } else {
           console.log(new Date(), 'AI Error - No choices provided in the response.')
