@@ -1,0 +1,58 @@
+<nav class="navbar navbar-expand-lg">
+  <div class="navbar-brand">Visual Test Composer - Compose tests for a provided JSON document interactively</div>
+  <div class="collapse navbar-collapse" id="navbarText">
+    <span class="navbar-text ms-auto text-light-emphasis">
+      <button type="button" data-bs-toggle="modal" data-bs-target="#testComposerInfoModal" href="#" class="btn btn-primary">Help</button>
+    </span>
+  </div>
+</nav>
+<div class="row">
+    <div class="col-12">
+        <div class="row">
+            <div class="col-4 mt-3">
+                <p><strong>JSON Response from API of Interest</strong></p>
+<pre id="jsonEditor">
+{
+  "status": "success",
+  "data": {
+    "user": {
+      "id": 123,
+      "username": "john_doe",
+      "email": "john@example.com",
+      "age": 30
+    },
+    "pets": [
+      {
+        "id": 1,
+        "name": "Max",
+        "species": "Dog",
+        "age": 5
+      },
+      {
+        "id": 2,
+        "name": "Whiskers",
+        "species": "Cat",
+        "age": 3
+      }
+    ]
+  }
+}
+</pre>
+            </div>
+            <div class="col-4 mt-3">
+              <p><strong>Test Generation Form</strong></p>
+              <div id="testFormContainer" class="container-fluid custom-container">
+              </div>
+            </div>
+            <div class="col-4 mt-3">
+              <p><strong>Test JS (paste this into the Tests tab within Postman)</strong></p>
+              <pre id="testJSEditor">
+// function HelloWorld = function() {
+//   console.log("Hello World!");
+// }
+              </pre>
+            </div>
+        </div>
+    </div>
+</div>
+<script src='js/testComposer.js'></script>

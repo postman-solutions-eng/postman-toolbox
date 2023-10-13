@@ -1,8 +1,6 @@
-body {
-  background-color: black;
-  color: white;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+/**********************************************************************/
+/* Begin section of classes customized for Governance Rule Playground */
+/**********************************************************************/
 
 h5 {
   margin-top: 20px;
@@ -12,32 +10,9 @@ p {
   margin-bottom: 2px;
 }
 
-button {
-  margin-bottom: 20px;
-}
-
-pre {
-  max-height: 400px;
-  overflow: scroll;
-}
-
-pre[class*='language-'] {
-  margin-top: 2px;
-}
-
-.copy {
-  position: absolute;
-  right: 40px;
-  background-color: gray;
-  padding: 2px 5px;
-  cursor: pointer;
-  display: none;
-}
-
 #spectralRule,
 #openApiSpec,
 #spectralCustomFunctions {
-  width: 32vw;
   height: 400px;
   position: relative;
   top: 0;
@@ -47,48 +22,8 @@ pre[class*='language-'] {
   font-size: 1em;
 }
 
-.info p {
-  margin-top: 10px;
-  font-size: 1em;
-}
-
-.info,
-h3,
-h4 {
-  margin-top: 15px;
-}
-
-.infolink:before {
-  content: '?';
-  display: inline-block;
-  font-family: sans-serif;
-  font-weight: bold;
-  text-align: center;
-  width: 3ex;
-  height: 3ex;
-  font-size: 2.5ex;
-  line-height: 2.7ex;
-  border-radius: 3ex;
-  margin-right: 4px;
-  padding: 1px;
-  color: white;
-  background: grey;
-  border: 1px solid grey;
-  text-decoration: none;
-}
-
-.infolink:hover:before {
-  color: white;
-  background: grey;
-  border-color: white;
-  text-decoration: none;
-}
-
-.modal {
-  color: black;
-}
-
-.resultTable {
+.resultTable,
+.resultTable thead tr th{
   background-color: darkslategray;
   color: white;
   font-family: 'Courier New', Courier, monospace;
@@ -103,10 +38,42 @@ h4 {
   font-family: 'Courier New', Courier, monospace;
 }
 
-
 /* JSONTree Styles */
 .json-container, .json-key {
   background-color: transparent !important;
   color: white !important;
   font-family: 'Courier New', Courier, monospace !important;
+}
+
+/****************************************************************/
+/* Begin section of classes customized for Visual Test Composer */
+/****************************************************************/
+
+#jsonEditor,
+#testJSEditor {
+  height: 70vh;
+  position: relative;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  font-size: 1em;
+}
+
+.custom-form-styling {
+  padding: 0rem .5rem;
+  font-size: 0.8rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  min-height: .7rem;
+  min-width: 100%
+}
+
+.custom-container {
+  height: 70vh;
+  overflow-y:auto;
+}
+
+.custom-btn {
+  margin-bottom: 0;
+  font-family: 'Courier New', Courier, monospace;
 }

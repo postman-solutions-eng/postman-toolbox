@@ -53,8 +53,23 @@ app.use((req, res, next) => {
 
 // render the main.hbs layout and the index.hbs file
 app.get('/', (req, res) => {
-  res.render('index')
-})
+  res.render('index');
+  console.log(new Date(), 'Index - Page View.')
+});
+
+// redirect when there is a trailing slash - was causing issues with relative paths.
+app.get('\\S+\/$', function (req, res) {
+  return res.redirect(301, req.path.slice(0, -1) + req.url.slice(req.path.length));
+});
+
+app.get('/governance-playground', (req, res) => {
+  res.render('governance-playground');
+  console.log(new Date(), 'Governance Playground - Page View.')
+});
+app.get('/test-composer', (req, res) => {
+  res.render('test-composer');
+  console.log(new Date(), 'Test Composer - Page View.')
+});
 
 app.set('trust proxy', 1)
 app.get('/ip', (request, response) => response.send(request.ip))
@@ -93,7 +108,7 @@ app.post('/api/generate', express.json(), (req, res) => {
             console.log(new Date(), 'AI Success - Prompt worked as expected.')
           }
 
-          
+
           //We have a choice for the response
           res.status(200).json({
             result: aiResponse.data.choices[0]
@@ -141,7 +156,7 @@ app.post('/validate', (req, res) => {
 })
 
 app.listen(3001, () => {
-  console.log(new Date(), 'Governance Rules Playground listening on port 3001!')
+  console.log(new Date(), 'Postman Toolbox listening on port 3001!')
 })
 
-module.exports = app
+module.exports = app;
