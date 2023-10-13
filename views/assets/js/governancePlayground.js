@@ -171,13 +171,27 @@ function goto (line) {
     editor.scrollToLine(line, true, true, function () {})
     editor.gotoLine(line, 10, true)
 
-    //Highlight the line
+    //Remove any previous markers
+    const prevMarkers = editor.session.getMarkers();
+    if (prevMarkers) {
+      const prevMarkersArr = Object.keys(prevMarkers);
+      for (let item of prevMarkersArr) {
+        editor.session.removeMarker(prevMarkers[item].id);
+      }
+    }
+
+    //Add a new marker to highlight the line
     var Range = ace.require('ace/range').Range;
     editor.session.addMarker(new Range(line-1, 1, line-1, 0), "myMarker", "fullLine");
     
     //Scroll the window to the line
     window.scrollTo(0, 0);
   }
+}
+
+function fullScreen() {
+  var editor = ace.edit('openApiSpec')
+  editor.container.webkitRequestFullscreen()
 }
 
 async function generate () {

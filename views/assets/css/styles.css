@@ -44,6 +44,11 @@ p {
   z-index:20
 }
 
+.full-screen {
+  float: right;
+  display: inline;
+}
+
 /* JSONTree Styles */
 .json-container, .json-key {
   background-color: transparent !important;
