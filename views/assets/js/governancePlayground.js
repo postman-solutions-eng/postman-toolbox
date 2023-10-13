@@ -44,12 +44,12 @@ async function validate () {
         pathTd.innerText = jsonPathMatch.path
 
         let matchesTd = document.createElement('td')
-        if(jsonPathMatch.matches.length > 0) {
-          const tree = jsonview.create(jsonPathMatch.matches);
-          jsonview.render(tree, matchesTd);
-          jsonview.expand(tree);
+        if (jsonPathMatch.matches.length > 0) {
+          const tree = jsonview.create(jsonPathMatch.matches)
+          jsonview.render(tree, matchesTd)
+          jsonview.expand(tree)
         } else {
-          matchesTd.innerText = "No matches found."
+          matchesTd.innerText = 'No matches found.'
         }
 
         tr.appendChild(pathTd)
@@ -103,7 +103,9 @@ async function validate () {
           }
 
           let rangeTd = document.createElement('td')
-          rangeTd.innerHTML = `${parseInt(spectralResult.range.start.line) + 1}`
+          rangeTd.innerHTML = `<a href="javascript:goto(${
+            parseInt(spectralResult.range.start.line) + 1
+          })">${parseInt(spectralResult.range.start.line) + 1}</a>`
 
           //add nodes to table
           tr.appendChild(codeTd)
@@ -146,12 +148,41 @@ for (let editor of editorNames) {
     enableSnippets: true,
     enableLiveAutocompletion: false
   })
+
+  thisEditor.on('focus', function() {
+    const prevMarkers = thisEditor.session.getMarkers();
+    if (prevMarkers) {
+      const prevMarkersArr = Object.keys(prevMarkers);
+      for (let item of prevMarkersArr) {
+        thisEditor.session.removeMarker(prevMarkers[item].id);
+      }
+    }
+  });
+
   editors.push(thisEditor)
+}
+
+function goto (line) {
+  if (line && parseInt(line) / 1 == line) {
+    var editor = ace.edit('openApiSpec')
+
+    //Move the cursor and the editor to the right line
+    editor.resize(true)
+    editor.scrollToLine(line, true, true, function () {})
+    editor.gotoLine(line, 10, true)
+
+    //Highlight the line
+    var Range = ace.require('ace/range').Range;
+    editor.session.addMarker(new Range(line-1, 1, line-1, 0), "myMarker", "fullLine");
+    
+    //Scroll the window to the line
+    window.scrollTo(0, 0);
+  }
 }
 
 async function generate () {
   //Disable the generate button
-  document.getElementById("generateRule").setAttribute("disabled", "disabled");
+  document.getElementById('generateRule').setAttribute('disabled', 'disabled')
 
   let textarea = document.getElementById('promptTextArea')
   let valid = false
@@ -185,35 +216,38 @@ async function generate () {
       response
         .json()
         .then(data => {
-          codeblock.value = data.result.message.content;
+          codeblock.value = data.result.message.content
         })
         .catch(err => {
-          console.log(err);
-          codeblock.value = "An error occurred. Please raise an issue in the GitHub repository if this continues to occur."
+          console.log(err)
+          codeblock.value =
+            'An error occurred. Please raise an issue in the GitHub repository if this continues to occur.'
         })
 
-        //reenable the button
-        document.getElementById("generateRule").disabled = false;
+      //reenable the button
+      document.getElementById('generateRule').disabled = false
     } else if (response && response.status == 429) {
-      codeblock.value = "Too many requests. You are allowed 5 requests per minute. Please wait a few seconds and try again."
-      let timer = 9;
+      codeblock.value =
+        'Too many requests. You are allowed 5 requests per minute. Please wait a few seconds and try again.'
+      let timer = 9
       let interval = setInterval(() => {
-        let button = document.getElementById("generateRule");
-        button.setAttribute("disabled", "disabled");
+        let button = document.getElementById('generateRule')
+        button.setAttribute('disabled', 'disabled')
 
-        button.innerText = "Generate (" + timer-- + ")";
+        button.innerText = 'Generate (' + timer-- + ')'
 
-        if(timer < 0) {
-          button.disabled = false;
-          button.innerText = "Generate";
-          clearInterval(interval);
+        if (timer < 0) {
+          button.disabled = false
+          button.innerText = 'Generate'
+          clearInterval(interval)
         }
       }, 1000)
     } else {
       //Some other error
-      codeblock.value = "An error occurred. Please raise an issue in the GitHub repository if this continues to occur."
+      codeblock.value =
+        'An error occurred. Please raise an issue in the GitHub repository if this continues to occur.'
       //reenable the button
-      document.getElementById("generateRule").disabled = false;
+      document.getElementById('generateRule').disabled = false
     }
   }
 }

@@ -38,6 +38,12 @@ p {
   font-family: 'Courier New', Courier, monospace;
 }
 
+.myMarker {
+  position:absolute;
+  background:rgba(245, 255, 110, 0.522);
+  z-index:20
+}
+
 /* JSONTree Styles */
 .json-container, .json-key {
   background-color: transparent !important;
