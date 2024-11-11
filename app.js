@@ -81,7 +81,7 @@ app.post('/api/generate', express.json(), (req, res) => {
     })
   } else {
     openai.chat.completions.create({
-        model: "gpt-3.5-turbo-1106",
+        model: "gpt-4o-mini",
         messages: [
           {
             "role": "system",
@@ -114,6 +114,7 @@ app.post('/api/generate', express.json(), (req, res) => {
         }
       })
       .catch(err => {
+        console.log(err)
         console.log(new Date(), 'AI Error - Generic Error thrown.')
         res.status(400).json({
           error: 'Error with prompt provided.'
