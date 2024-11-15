@@ -67,6 +67,10 @@ app.get('/test-composer', (req, res) => {
   res.render('test-composer');
   console.log(new Date(), 'Test Composer - Page View.')
 });
+app.get('/test-reporter', (req, res) => {
+  res.render('test-reporter');
+  console.log(new Date(), 'Test Reporter - Page View.')
+});
 
 app.set('trust proxy', 1)
 app.get('/ip', (request, response) => response.send(request.ip))
