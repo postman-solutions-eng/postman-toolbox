@@ -24,6 +24,16 @@ Enter your Spectral rule in YAML (or quoted JSON) format and an associated API s
 
 The JSON Path that is identified by the `given` clause will be presented to you, along with the results of the spectral valiation.
 
+### AI rule generation
+The Governance Rules Playground can generate Spectral rules with AI directly in the browser.
+
+- The OpenAI key never leaves the browser. The UI validates it via `GET https://api.openai.com/v1/models` before generation.
+- "Remember on this device" stores an obfuscated key locally (AES-GCM with a locally stored secret) for silent reuse.
+- Stored keys are auto-validated on load; invalid keys are cleared automatically.
+- If "Remember on this device" is unchecked, the key stays only in memory until the page is refreshed.
+- Client-side rate limiting is enforced at 5 requests per minute.
+- Server fallback is disabled by default. Set `ENABLE_SERVER_AI=true` to enable `/api/generate`.
+
 ### Contributing
 
 Please raise an Issue if you find any bugs, or feel free to fork the code and submit a PR.
@@ -88,4 +98,3 @@ information, or chai assertions leave the web browser unless said action is expl
 See <a href="./LICENSE">LICENSE</a>.
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fpostman-toolbox.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpostman-solutions-eng%2Fpostman-toolbox?ref=badge_large)
-

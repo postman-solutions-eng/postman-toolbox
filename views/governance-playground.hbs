@@ -10,7 +10,10 @@
   <div class="col-12">
     <div class="row">
       <div class="col-4 mt-3">
-        <p><strong>Spectral Ruleset</strong><span style="float:right"><a class="generateLink" data-bs-toggle="modal" data-bs-target="#generateModal" href="#">Generate with AI</a></span></p>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <strong>Spectral Ruleset</strong>
+          <button type="button" class="btn btn-primary generateLink" data-bs-toggle="modal" data-bs-target="#generateModal" data-bs-placement="left" data-bs-title="Generate rules using your OpenAI key in your browser.">Generate with AI</button>
+        </div>
         <pre id="spectralRule">
 functions: [hello]
 rules:
@@ -892,4 +895,9 @@ components:
   </div>
 </div>
 <script src="js/jsonview/jsonview.js"></script>
+<script>
+  window.ENABLE_SERVER_AI = {{#if enableServerAi}}true{{else}}false{{/if}};
+  window.SYSTEM_PROMPT_URL = '/prompts/system.json';
+</script>
+<script src='js/aiKeyUtils.js'></script>
 <script src='js/governancePlayground.js'></script>
