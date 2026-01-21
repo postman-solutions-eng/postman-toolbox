@@ -1,0 +1,588 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+<style>
+  table {
+    color: black;
+  }
+  #reportContainer {
+    width: 1024px;
+    background-color: #FFF;
+    color: black;
+    padding: 40px;
+    margin:auto;
+  }
+
+  .chart-container {
+    margin-bottom: 80px;
+    position: relative;
+    height: 400px;
+  }
+
+  .small-chart-container {
+    height: 300px;
+  }
+
+  #errorMessage {
+    color: red;
+    margin-top: 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
+
+
+  .file-input-wrapper {
+    margin-top: 20px;
+  }
+
+  .file-input-wrapper input[type="file"] {
+    display: none;
+  }
+
+  .file-input-wrapper label {
+    background-color: #0077be;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+  }
+
+  .file-input-wrapper label:hover {
+    background-color: #005f8f;
+  }
+</style>
+<nav class="navbar navbar-expand-lg">
+  <div class="navbar-brand">Visual Test Reporter - Generate reports from exported JSON files from Postman Collection
+    Runner</div>
+  <div class="collapse navbar-collapse" id="navbarText">
+    <span class="navbar-text ms-auto text-light-emphasis">
+      <button type="button" data-bs-toggle="modal" data-bs-target="#testReporterInfoModal" href="#"
+        class="btn btn-primary">Help</button>
+    </span>
+  </div>
+</nav>
+
+
+
+<div class="row">
+  <div class="col-12" id="introSection">
+    <p>This tool helps you visualize and analyze your API test results. Here's how to use it:</p>
+    <ol>
+      <li>Upload your JSON file containing API test results.</li>
+      <li>View automatically generated charts and tables summarizing your test data.</li>
+      <li>Export the report as an HTML file for easy sharing and future reference.</li>
+    </ol>
+    <p>The report includes:</p>
+    <ul>
+      <li>Overall test pass/fail ratio</li>
+      <li>Method coverage analysis</li>
+      <li>Request coverage breakdown</li>
+      <li>Endpoint coverage breakdown</li>
+      <li>Performance metrics</li>
+      <li>Detailed test results by endpoint</li>
+    </ul>
+    <div class="file-input-wrapper">
+      <label for="fileInput">Choose JSON File</label>
+      <input type="file" id="fileInput" accept=".json">
+    </div>
+  </div>
+</div>
+
+<div id="exportSection" style="display:none;">
+  <button id="exportButton">Save Report</button>
+</div>
+
+<div id="errorMessage"></div>
+<div id="reportContainer" style="display:none;">
+  <div class="chart-container small-chart-container">
+    <h2 id="test-name">Test Results</h2>
+    <p id="test-datetime"></p>
+    <canvas id="testResultsChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Method Coverage</h2>
+    <canvas id="methodCoverageChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Request Coverage</h2>
+    <canvas id="endpointCoverageChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Test Results by Endpoint</h2>
+    <canvas id="endpointResultsChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Performance Metrics</h2>
+    <canvas id="performanceMetricsChart"></canvas>
+  </div>
+  <div>
+    <h2>Test Details by Endpoint</h2>
+    <table id="testDetailsTable">
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Method</th>
+          <th>Response Code</th>
+          <th>Tests</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const chartInstances = {};
+
+  document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = '';
+
+    if (file) {
+      // Hide the intro section
+      document.getElementById('introSection').style.display = 'none';
+
+      const reader = new FileReader();
+      reader.onload = handleFileLoad;
+      reader.onerror = handleFileError;
+      reader.readAsText(file);
+    } else {
+      errorMessage.textContent = 'Please select a file.';
+    }
+  }
+
+  function handleFileError(error) {
+    console.error("Error reading file:", error);
+    document.getElementById('errorMessage').textContent = 'Error reading the file. Please try again.';
+  }
+
+  function handleFileLoad(event) {
+    try {
+      const data = JSON.parse(event.target.result);
+      document.getElementById('test-datetime').innerText = `Run date: ${new Date(data.timestamp)}`;
+      generateReport(data);
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      document.getElementById('errorMessage').textContent = "Error parsing the file. Please make sure it's a valid JSON file.";
+    }
+  }
+
+  function generateReport(data) {
+    document.getElementById('reportContainer').style.display = 'block';
+
+    // Clear all existing charts
+    Object.values(chartInstances).forEach(chart => chart.destroy());
+
+    document.getElementById('test-name').innerText = data.name;
+
+    generateTestResultsChart(data);
+    generateMethodCoverageChart(data);
+    generateEndpointCoverageChart(data);
+    generateEndpointResultsChart(data);
+    generatePerformanceMetricsChart(data);
+    generateTestDetailsTable(data);
+
+    // Show the export button
+    document.getElementById('exportSection').style.display = 'inline-block';
+  }
+
+  function generateTestResultsChart(data) {
+
+    if (chartInstances.testResultsChart) {
+      chartInstances.testResultsChart.destroy();
+    }
+
+    const ctx = document.getElementById('testResultsChart').getContext('2d');
+    chartInstances.testResultsChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Passed', 'Failed'],
+        datasets: [{
+          data: [data.totalPass, data.totalFail],
+          backgroundColor: ['#4CAF50', '#F44336']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+          },
+          title: {
+            display: true,
+            text: 'Test Results'
+          }
+        }
+      }
+    });
+  }
+
+  function generateMethodCoverageChart(data) {
+    if (chartInstances.methodCoverageChart) {
+      chartInstances.methodCoverageChart.destroy();
+    }
+
+    const methodCounts = data.results.reduce((acc, result) => {
+      const request = data.collection.requests.find(req => req.id === result.id);
+      if (request) {
+        if (!acc[request.method]) {
+          acc[request.method] = { pass: 0, fail: 0 };
+        }
+        const allTestsPassed = Object.values(result.tests).every(test => test === true);
+        if (allTestsPassed) {
+          acc[request.method].pass++;
+        } else {
+          acc[request.method].fail++;
+        }
+      }
+      return acc;
+    }, {});
+
+    const ctx = document.getElementById('methodCoverageChart').getContext('2d');
+    chartInstances.methodCoverageChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(methodCounts),
+        datasets: [
+          {
+            label: 'Endpoints Passed',
+            data: Object.values(methodCounts).map(count => count.pass),
+            backgroundColor: '#8884d8'
+          },
+          {
+            label: 'Endpoints Failed',
+            data: Object.values(methodCounts).map(count => count.fail),
+            backgroundColor: '#F44336'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            stacked: true,
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Number of Requests'
+            }
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Method Coverage: Pass/Fail Count'
+          }
+        }
+      }
+    });
+  }
+
+  function generateEndpointCoverageChart(data) {
+    if (chartInstances.endpointCoverageChart) {
+      chartInstances.endpointCoverageChart.destroy();
+    }
+
+    const endpointCounts = data.results.reduce((acc, result) => {
+      const urlParts = new URL(result.url);
+      const endpoint = urlParts.pathname;
+      acc[endpoint] = (acc[endpoint] || 0) + 1;
+      return acc;
+    }, {});
+
+    const ctx = document.getElementById('endpointCoverageChart').getContext('2d');
+    chartInstances.endpointCoverageChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(endpointCounts),
+        datasets: [{
+          label: 'Number of Requests',
+          data: Object.values(endpointCounts),
+          backgroundColor: '#82ca9d'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Number of Requests'
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function generateEndpointResultsChart(data) {
+    if (chartInstances.endpointResultsChart) {
+      chartInstances.endpointResultsChart.destroy();
+    }
+
+    // Process the data to count passes and failures for each endpoint
+    const endpointResults = data.results.reduce((acc, result) => {
+      const urlParts = new URL(result.url);
+      const endpoint = urlParts.pathname;
+
+      if (!acc[endpoint]) {
+        acc[endpoint] = { pass: 0, fail: 0 };
+      }
+
+      const testResults = Object.values(result.tests || {});
+      const passCount = testResults.filter(test => test === true).length;
+      const failCount = testResults.filter(test => test === false).length;
+
+      acc[endpoint].pass += passCount;
+      acc[endpoint].fail += failCount;
+
+      return acc;
+    }, {});
+
+    // Prepare the data for the chart
+    const endpoints = Object.keys(endpointResults);
+    const passData = endpoints.map(endpoint => endpointResults[endpoint].pass);
+    const failData = endpoints.map(endpoint => endpointResults[endpoint].fail);
+
+    // Create the chart
+    const ctx = document.getElementById('endpointResultsChart').getContext('2d');
+    chartInstances.endpointResultsChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: endpoints,
+        datasets: [
+          {
+            label: 'Passed',
+            data: passData,
+            backgroundColor: '#4CAF50'
+          },
+          {
+            label: 'Failed',
+            data: failData,
+            backgroundColor: '#F44336'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            stacked: true,
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45
+            }
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Number of Tests'
+            }
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Test Results by Endpoint'
+          },
+          tooltip: {
+            callbacks: {
+              afterTitle: function (context) {
+                const dataIndex = context[0].dataIndex;
+                const endpoint = endpoints[dataIndex];
+                const total = endpointResults[endpoint].pass + endpointResults[endpoint].fail;
+                return `Total tests: ${total}`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function generatePerformanceMetricsChart(data) {
+    if (chartInstances.performanceMetricsChart) {
+      chartInstances.performanceMetricsChart.destroy();
+    }
+
+    const ctx = document.getElementById('performanceMetricsChart').getContext('2d');
+    chartInstances.performanceMetricsChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.results.map(result => result.name.split(' ').slice(0, 3).join(' ')),
+        datasets: [{
+          label: 'Response Time (ms)',
+          data: data.results.map(result => result.time),
+          backgroundColor: '#8884d8'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Response Time (ms)'
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function generateTestDetailsTable(data) {
+    const tableBody = document.querySelector('#testDetailsTable tbody');
+    tableBody.innerHTML = '';
+
+    data.results.forEach(result => {
+      const request = data.collection.requests.find(req => req.id === result.id);
+      if (request) {
+        const row = tableBody.insertRow();
+        const urlParts = new URL(result.url);
+        const endpoint = urlParts.pathname;
+
+        row.insertCell(0).textContent = endpoint;
+        row.insertCell(1).textContent = request.method;
+        row.insertCell(2).textContent = result.responseCode.code;
+
+        const testsCell = row.insertCell(3);
+        const testsList = document.createElement('ul');
+        Object.keys(result.tests || {}).forEach(test => {
+          const listItem = document.createElement('li');
+          const testPassed = result.tests[test];
+          if (testPassed) {
+            listItem.textContent = `${test}: Passed`;
+          } else {
+            listItem.innerHTML = `<span style="color: red; font-weight: bold;">${test}: Failed</span>`;
+          }
+          testsList.appendChild(listItem);
+        });
+        testsCell.appendChild(testsList);
+      }
+    });
+  }
+
+  function exportReport() {
+    // Capture the current state of the charts
+    const chartData = {};
+    const chartIds = ['testResultsChart', 'methodCoverageChart', 'endpointCoverageChart', 'performanceMetricsChart', 'endpointResultsChart'];
+
+    chartIds.forEach(id => {
+      const canvas = document.getElementById(id);
+      if (canvas) {
+        chartData[id] = canvas.toDataURL('image/png');
+      }
+    });
+
+    // Get the current table HTML
+    const tableHtml = document.getElementById('testDetailsTable').outerHTML;
+
+    // Create the HTML content
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman Test Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        .chart-container { margin-bottom: 30px; }
+        img { max-width: 100%; height: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Postman Test Results</h1>
+        <div class="chart-container">
+            <h2>${document.getElementById('test-name').innerText}</h2>
+            <p id="test-datetime">${document.getElementById('test-datetime').innerText}</p>
+            <img src="${chartData.testResultsChart || ''}" alt="Test Results Chart">
+        </div>
+        <div class="chart-container">
+            <h2>Method Coverage</h2>
+            <img src="${chartData.methodCoverageChart || ''}" alt="Method Coverage Chart">
+        </div>
+        <div class="chart-container">
+            <h2>Endpoint Coverage</h2>
+            <img src="${chartData.endpointCoverageChart || ''}" alt="Endpoint Coverage Chart">
+        </div>
+        <div class="chart-container">
+            <h2>Performance Metrics</h2>
+            <img src="${chartData.performanceMetricsChart || ''}" alt="Performance Metrics Chart">
+        </div>
+        <div class="chart-container">
+            <h2>Test Results by Endpoint</h2>
+            <img src="${chartData.endpointResultsChart || ''}" alt="Test Results by Endpoint Chart">
+        </div>
+        <div>
+            <h2>Test Details by Endpoint</h2>
+            ${tableHtml}
+        </div>
+    </div>
+</body>
+</html>
+    `;
+
+    // Create a Blob with the HTML content
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+
+    // Create a download link and trigger the download
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'api_test_report.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+
+  // Add this at the end of your script
+  document.getElementById('exportButton').addEventListener('click', exportReport);
+</script>
