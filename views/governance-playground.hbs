@@ -6,14 +6,110 @@
     </span>
   </div>
 </nav>
-<div class="row">
+
+<!-- Main container with library sidebar and editors -->
+<div class="governance-container">
+  {{> library-sidebar}}
+
+  <div class="governance-editors">
+    <div class="row" style="flex: 1;">
   <div class="col-12">
     <div class="row">
       <div class="col-4 mt-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <strong>Spectral Ruleset</strong>
-          <button type="button" class="btn btn-primary generateLink" data-bs-toggle="modal" data-bs-target="#generateModal" data-bs-placement="left" data-bs-title="Generate rules using your OpenAI key in your browser.">Generate with AI</button>
+          <button type="button" class="btn-ai-generate" id="toggleAiPanel" aria-expanded="false" aria-controls="aiGeneratePanel">
+            <svg class="ai-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+            </svg>
+            Generate with AI
+            <svg class="ai-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
         </div>
+
+        <!-- Inline AI Generation Panel -->
+        <div class="ai-panel" id="aiGeneratePanel" hidden>
+          <div class="ai-panel-header">
+            <span class="ai-panel-title">AI Rule Generator</span>
+            <button type="button" class="ai-settings-btn" id="aiSettingsToggle" aria-label="API Key Settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Settings Dropdown -->
+          <div class="ai-settings-dropdown" id="aiSettingsDropdown" hidden>
+            <div class="ai-settings-content">
+              <label class="ai-settings-label">API Key Source</label>
+              <div class="ai-key-source-options">
+                <label class="ai-radio-option">
+                  <input type="radio" name="keySource" id="keySourceUser" value="user" checked>
+                  <span>My OpenAI key</span>
+                </label>
+                {{#if enableServerAi}}
+                <label class="ai-radio-option">
+                  <input type="radio" name="keySource" id="keySourceServer" value="server">
+                  <span>Server key</span>
+                </label>
+                {{/if}}
+              </div>
+
+              <div id="userKeySection" class="ai-key-input-section">
+                <label class="ai-settings-label" for="openaiKeyInput">OpenAI API Key</label>
+                <div class="ai-key-input-group">
+                  <input type="password" id="openaiKeyInput" placeholder="sk-..." autocomplete="off">
+                  <button type="button" id="validateKeyButton">Validate</button>
+                </div>
+                <div class="ai-key-status" id="keyStatus">Key not validated</div>
+
+                <label class="ai-checkbox-option">
+                  <input type="checkbox" id="rememberKey">
+                  <span>Remember on this device</span>
+                </label>
+
+                <div id="storedKeyContainer" class="ai-stored-key" hidden>
+                  <span class="ai-stored-key-badge">Key stored</span>
+                  <button type="button" id="forgetStoredKeyButton" class="ai-forget-btn">Forget</button>
+                </div>
+              </div>
+
+              <div id="serverKeySection" class="ai-server-key-notice" hidden>
+                <span>Using shared server key</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Generation UI -->
+          <div class="ai-generate-main">
+            <div class="ai-prompt-section">
+              <textarea id="promptTextArea" placeholder="Describe the rule you want to create, e.g., 'Validate that all query parameters use snake_case'" rows="2"></textarea>
+              <button type="button" id="generateRule" class="ai-generate-btn" disabled>
+                <svg class="ai-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                Generate
+              </button>
+            </div>
+
+            <div class="ai-result-section" id="aiResultSection" hidden>
+              <div class="ai-result-header">
+                <span>Generated Rule</span>
+                <button type="button" class="ai-copy-btn" id="copyResultBtn" title="Copy to clipboard">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+              </div>
+              <pre id="responseTextArea" class="ai-result-code"></pre>
+            </div>
+          </div>
+        </div>
+
         <pre id="spectralRule">
 functions: [hello]
 rules:
@@ -859,41 +955,57 @@ components:
       <div class="col-4"></div>
     </div>
 
-    <div class="row mt-3">
-      <div class="col-4 mt-0">
-        <p><strong>JSON Path Results</strong></p>
-        <table class="table resultTable" id="jsonPathResultTable">
-          <thead>
-            <tr>
-              <th>path</th>
-              <th>matches</th>
-            </tr>
-          </thead>
-          <tbody id="jsonPathTableResultsBody">
-          </tbody>
-        </table>
-      </div>
+    <div class="row mt-4">
+      <div class="col-12">
+        <!-- JSON Path Results Section -->
+        <div class="results-section" id="jsonPathResultsSection" style="display: none;">
+          <div class="results-header" onclick="toggleResultsSection('jsonPath')">
+            <h3>📍 JSON Path Matches</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="results-content" id="jsonPathResultsContent">
+            <table class="resultTable" id="jsonPathResultTable">
+              <thead>
+                <tr>
+                  <th style="width: 35%;">JSONPath Expression</th>
+                  <th>Matched Values</th>
+                </tr>
+              </thead>
+              <tbody id="jsonPathTableResultsBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-      <div class="col-8 mt-0">
-        <p><strong>Spectral Validation Results</strong></p>
-        <div id="spectralResultsError"></div>
-        <table class="table resultTable" id="spectralResultsTable">
-          <thead>
-            <tr>
-              <th>code</th>
-              <th>message</th>
-              <th>path</th>
-              <th>severity</th>
-              <th>line</th>
-            </tr>
-          </thead>
-          <tbody id="spectralResultsTableBody">
-          </tbody>
-        </table>
+        <!-- Spectral Validation Results Section -->
+        <div class="results-section" id="spectralResultsSection" style="display: none;">
+          <div class="results-header" onclick="toggleResultsSection('spectral')">
+            <h3>✓ Spectral Validation Results</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="results-content" id="spectralResultsContent">
+            <div id="spectralResultsError"></div>
+            <table class="resultTable" id="spectralResultsTable">
+              <thead>
+                <tr>
+                  <th style="width: 15%;">Rule</th>
+                  <th style="width: 35%;">Message</th>
+                  <th style="width: 25%;">Path</th>
+                  <th style="width: 12%;">Severity</th>
+                  <th style="width: 13%;">Line</th>
+                </tr>
+              </thead>
+              <tbody id="spectralResultsTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
+    </div>
     </div>
   </div>
 </div>
+
 <script src="js/jsonview/jsonview.js"></script>
 <script>
   window.ENABLE_SERVER_AI = {{#if enableServerAi}}true{{else}}false{{/if}};

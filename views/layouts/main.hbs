@@ -1,6 +1,14 @@
-<html data-bs-theme="dark">
+<html>
 
 <head>
+  <script>
+    // Apply theme immediately to prevent FOUC (Flash of Unstyled Content)
+    (function() {
+      const THEME_STORAGE_KEY = 'postman-toolbox-theme';
+      const theme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+      document.documentElement.setAttribute('data-bs-theme', theme);
+    })();
+  </script>
   <title>Postman Toolbox</title>
   <!-- CSS only -->
   <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css' rel='stylesheet'
@@ -42,6 +50,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"
           integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ=="
           crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script src='js/themeManager.js'></script>
+  <script src='js/libraryManager.js'></script>
 </head>
 
 <body>
