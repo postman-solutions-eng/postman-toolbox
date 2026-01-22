@@ -617,6 +617,45 @@ p {
   background-color: var(--color-bg-hover);
 }
 
+.spec-link-btn {
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.spec-link-btn:hover {
+  color: var(--color-accent);
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border);
+}
+
+.spec-link-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.openapi-url-popover {
+  min-width: 260px;
+}
+
+.openapi-url-popover .form-control {
+  font-size: 0.85rem;
+}
+
+.openapi-url-error {
+  display: none;
+}
+
 /* JSONTree Styles */
 .json-container,
 .json-key {
