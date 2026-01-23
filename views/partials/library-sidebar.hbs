@@ -1,0 +1,128 @@
+<div class="library-sidebar" id="librarySidebar">
+  <div class="library-header">
+    <h6>Library</h6>
+    <button id="collapseSidebarBtn" class="btn-collapse" aria-label="Toggle library sidebar" title="Toggle library sidebar">
+      <span class="collapse-icon">←</span>
+    </button>
+  </div>
+  <!-- Collapsed state indicator -->
+  <div class="library-collapsed-indicator" title="Expand library">
+    <span class="collapsed-icon">→</span>
+  </div>
+
+  <!-- Rules Section -->
+  <div class="library-section">
+    <div class="library-section-header">
+      <span>Rules</span>
+      <button class="btn-add" id="addRuleBtn" data-type="rule" aria-label="Add new rule" title="Save current rule">
+        +
+      </button>
+    </div>
+    <div id="rulesLibraryList" class="library-list">
+      <!-- Rules will be dynamically populated here -->
+      <div class="library-empty">No saved rules</div>
+    </div>
+  </div>
+
+  <!-- Functions Section -->
+  <div class="library-section">
+    <div class="library-section-header">
+      <span>Functions</span>
+      <button class="btn-add" id="addFunctionBtn" data-type="function" aria-label="Add new function" title="Save current function">
+        +
+      </button>
+    </div>
+    <div id="functionsLibraryList" class="library-list">
+      <!-- Functions will be dynamically populated here -->
+      <div class="library-empty">No saved functions</div>
+    </div>
+  </div>
+</div>
+
+<!-- Save Modal -->
+<div class='modal fade' id='saveLibraryItemModal' tabindex='-1' aria-labelledby='saveLibraryItemModalLabel' aria-hidden='true'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <h5 class='modal-title' id='saveLibraryItemModalLabel'>Save to Library</h5>
+        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+      </div>
+      <div class='modal-body'>
+        <form id="saveLibraryItemForm">
+          <div class="mb-3">
+            <label for="libraryItemName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="libraryItemName" placeholder="Enter a name..." required maxlength="50" autocomplete="off">
+            <div class="invalid-feedback" id="libraryItemNameError"></div>
+            <div class="form-text">Give this <span id="libraryItemType"></span> a descriptive name.</div>
+          </div>
+        </form>
+      </div>
+      <div class='modal-footer'>
+        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
+        <button type='button' class='btn btn-primary' id='saveLibraryItemBtn'>Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class='modal fade' id='deleteLibraryItemModal' tabindex='-1' aria-labelledby='deleteLibraryItemModalLabel' aria-hidden='true'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <h5 class='modal-title' id='deleteLibraryItemModalLabel'>Delete Library Item</h5>
+        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+      </div>
+      <div class='modal-body'>
+        <p>Are you sure you want to delete "<strong id="deleteLibraryItemName"></strong>"?</p>
+        <p class="text-muted small mb-0">This action cannot be undone.</p>
+      </div>
+      <div class='modal-footer'>
+        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
+        <button type='button' class='btn btn-danger' id='confirmDeleteLibraryItemBtn'>Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Overwrite Confirmation Modal -->
+<div class='modal fade' id='overwriteConfirmModal' tabindex='-1' aria-labelledby='overwriteConfirmModalLabel' aria-hidden='true'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <h5 class='modal-title' id='overwriteConfirmModalLabel'>Unsaved Changes</h5>
+        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+      </div>
+      <div class='modal-body'>
+        <p>You have unsaved changes in the <strong id="overwriteItemType"></strong> editor.</p>
+        <p class="text-muted small mb-0">Would you like to save your changes first, or discard them?</p>
+      </div>
+      <div class='modal-footer'>
+        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
+        <button type='button' class='btn btn-outline-danger' id='discardChangesBtn'>Discard Changes</button>
+        <button type='button' class='btn btn-primary' id='saveFirstBtn'>Save First</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Load Rule Options Modal -->
+<div class='modal fade' id='loadRuleModeModal' tabindex='-1' aria-labelledby='loadRuleModeModalLabel' aria-hidden='true'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <h5 class='modal-title' id='loadRuleModeModalLabel'>Load Rule</h5>
+        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+      </div>
+      <div class='modal-body'>
+        <p>How would you like to load "<strong id="loadRuleName"></strong>"?</p>
+        <p class="text-muted small mb-0">Replace will overwrite the current ruleset. Append will add it to the end.</p>
+      </div>
+      <div class='modal-footer'>
+        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
+        <button type='button' class='btn btn-outline-secondary' id='loadRuleAppendBtn'>Append</button>
+        <button type='button' class='btn btn-primary' id='loadRuleReplaceBtn'>Replace</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -438,8 +438,13 @@ function renderFormEntry(index, formEntry) {
 
 //Initialize/Config ACE Editors
 ace.require('ace/ext/language_tools')
+
+// Determine initial theme based on current app theme
+const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light'
+const aceTheme = currentTheme === 'dark' ? 'ace/theme/monokai' : 'ace/theme/github'
+
 let jsonEditor = ace.edit('jsonEditor')
-jsonEditor.setTheme('ace/theme/monokai')
+jsonEditor.setTheme(aceTheme)
 jsonEditor.session.setMode('ace/mode/json')
 jsonEditor.session.setTabSize(2)
 jsonEditor.session.setUseSoftTabs(true)
@@ -449,7 +454,7 @@ jsonEditor.setOptions({
   enableLiveAutocompletion: false
 })
 let testJSEditor = ace.edit('testJSEditor')
-testJSEditor.setTheme('ace/theme/monokai')
+testJSEditor.setTheme(aceTheme)
 testJSEditor.session.setMode('ace/mode/javascript')
 testJSEditor.session.setTabSize(2)
 testJSEditor.session.setUseSoftTabs(true)
@@ -458,6 +463,13 @@ testJSEditor.setOptions({
   enableSnippets: true,
   enableLiveAutocompletion: false
 })
+
+// Expose editors globally for theme manager
+window.jsonEditor = jsonEditor
+window.testJSEditor = testJSEditor
+
+// Dispatch event to notify theme manager that editors are ready
+window.dispatchEvent(new CustomEvent('editorsInitialized'))
 
 // Create debounced versions of functions that react to user input
 // so we can call them in a way that doesn't result in a repeated invocation. (e.g. on every single keystroke)
