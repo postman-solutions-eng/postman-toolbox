@@ -20,6 +20,25 @@ const aiState = {
   isGenerating: false
 }
 
+const OPENAPI_URL_SCAN_LINES = 20
+
+const openApiState = {
+  lastLoadedContent: '',
+  isDirty: false,
+  trackingReady: false
+}
+
+const openApiUrlState = {
+  popover: null,
+  pendingUrl: '',
+  lastUrl: '',
+  isLoading: false
+}
+
+const openApiFileState = {
+  pendingFile: null
+}
+
 let aiSystemPrompt = ''
 let aiRateLimitTimer = null
 let aiElements = null
@@ -277,6 +296,421 @@ function toggleResultsSection(section) {
 
 // Make function globally available
 window.toggleResultsSection = toggleResultsSection
+
+/**********************************************************************/
+/* OPENAPI URL LOADER                                                 */
+/**********************************************************************/
+
+function initOpenApiUrlLoader() {
+  const trigger = document.getElementById('openApiUrlBtn')
+  if (!trigger) {
+    return
+  }
+
+  setupOpenApiDirtyTracking()
+
+  openApiUrlState.popover = new bootstrap.Popover(trigger, {
+    container: 'body',
+    html: true,
+    sanitize: false,
+    placement: 'bottom',
+    trigger: 'click',
+    title: 'Load from URL',
+    content: getOpenApiUrlPopoverContent
+  })
+
+  trigger.addEventListener('shown.bs.popover', () => {
+    const input = document.getElementById('openApiUrlInput')
+    if (input) {
+      input.value = openApiUrlState.lastUrl || ''
+      input.focus()
+      input.select()
+    }
+  })
+
+  trigger.addEventListener('hidden.bs.popover', () => {
+    clearOpenApiUrlError()
+  })
+
+  document.addEventListener('click', handleOpenApiPopoverClick)
+  document.addEventListener('input', handleOpenApiPopoverInput)
+  document.addEventListener('keydown', handleOpenApiPopoverKeydown)
+
+  const replaceBtn = document.getElementById('confirmOpenApiReplaceBtn')
+  if (replaceBtn) {
+    replaceBtn.addEventListener('click', confirmOpenApiReplace)
+  }
+
+  const replaceModal = document.getElementById('openApiReplaceConfirmModal')
+  if (replaceModal) {
+    replaceModal.addEventListener('hidden.bs.modal', () => {
+      openApiUrlState.pendingUrl = ''
+      openApiFileState.pendingFile = null
+    })
+  }
+
+  const uploadBtn = document.getElementById('openApiUploadBtn')
+  const fileInput = document.getElementById('openApiFileInput')
+  if (uploadBtn && fileInput) {
+    uploadBtn.addEventListener('click', () => {
+      hideOpenApiPopover()
+      fileInput.click()
+    })
+
+    fileInput.addEventListener('change', handleOpenApiFileSelect)
+  }
+}
+
+function setupOpenApiDirtyTracking() {
+  const editor = editors[2]
+  if (!editor || openApiState.trackingReady) {
+    return
+  }
+
+  openApiState.lastLoadedContent = editor.getValue()
+  openApiState.isDirty = false
+  openApiState.trackingReady = true
+
+  editor.on('change', () => {
+    const currentContent = editor.getValue()
+    openApiState.isDirty = currentContent !== openApiState.lastLoadedContent
+  })
+}
+
+function getOpenApiUrlPopoverContent() {
+  return `
+    <div class="openapi-url-popover">
+      <label class="form-label mb-1" for="openApiUrlInput">OpenAPI URL</label>
+      <input type="url" class="form-control form-control-sm" id="openApiUrlInput" placeholder="https://example.com/openapi.yaml">
+      <div class="openapi-url-error text-danger small mt-1" id="openApiUrlError" role="alert"></div>
+      <div class="d-flex justify-content-end gap-2 mt-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="openApiUrlCancelBtn">Cancel</button>
+        <button type="button" class="btn btn-sm btn-primary" id="openApiUrlLoadBtn">Load</button>
+      </div>
+    </div>
+  `
+}
+
+function handleOpenApiPopoverClick(event) {
+  if (!event.target || !event.target.closest) {
+    return
+  }
+
+  const loadBtn = event.target.closest('#openApiUrlLoadBtn')
+  if (loadBtn) {
+    event.preventDefault()
+    requestOpenApiUrlLoad()
+    return
+  }
+
+  const cancelBtn = event.target.closest('#openApiUrlCancelBtn')
+  if (cancelBtn) {
+    event.preventDefault()
+    hideOpenApiPopover()
+  }
+}
+
+function handleOpenApiPopoverInput(event) {
+  if (event.target && event.target.id === 'openApiUrlInput') {
+    clearOpenApiUrlError()
+  }
+}
+
+function handleOpenApiPopoverKeydown(event) {
+  if (event.key !== 'Enter') {
+    return
+  }
+
+  if (event.target && event.target.id === 'openApiUrlInput') {
+    event.preventDefault()
+    requestOpenApiUrlLoad()
+  }
+}
+
+function requestOpenApiUrlLoad() {
+  if (openApiUrlState.isLoading) {
+    return
+  }
+
+  const input = document.getElementById('openApiUrlInput')
+  if (!input) {
+    return
+  }
+
+  const url = input.value.trim()
+  clearOpenApiUrlError()
+
+  if (!url) {
+    showOpenApiUrlError('Enter a URL to load.')
+    return
+  }
+
+  if (!isValidHttpUrl(url)) {
+    showOpenApiUrlError('Enter a valid http or https URL.')
+    return
+  }
+
+  openApiUrlState.lastUrl = url
+  openApiFileState.pendingFile = null
+
+  if (openApiState.isDirty) {
+    openApiUrlState.pendingUrl = url
+    const modal = new bootstrap.Modal(document.getElementById('openApiReplaceConfirmModal'))
+    modal.show()
+    return
+  }
+
+  fetchOpenApiFromUrl(url)
+}
+
+function handleOpenApiFileSelect(event) {
+  const input = event.target
+  const file = input && input.files ? input.files[0] : null
+  input.value = ''
+
+  if (!file) {
+    return
+  }
+
+  openApiUrlState.pendingUrl = ''
+
+  if (openApiState.isDirty) {
+    openApiFileState.pendingFile = file
+    const modal = new bootstrap.Modal(document.getElementById('openApiReplaceConfirmModal'))
+    modal.show()
+    return
+  }
+
+  loadOpenApiFile(file)
+}
+
+function confirmOpenApiReplace() {
+  const pendingFile = openApiFileState.pendingFile
+  const pendingUrl = openApiUrlState.pendingUrl
+  if (!pendingUrl && !pendingFile) {
+    return
+  }
+
+  const modalElement = document.getElementById('openApiReplaceConfirmModal')
+  const modal = bootstrap.Modal.getInstance(modalElement)
+  if (modal) {
+    modal.hide()
+  }
+
+  openApiUrlState.pendingUrl = ''
+  openApiFileState.pendingFile = null
+
+  if (pendingFile) {
+    loadOpenApiFile(pendingFile)
+    return
+  }
+
+  fetchOpenApiFromUrl(pendingUrl)
+}
+
+async function fetchOpenApiFromUrl(url) {
+  setOpenApiUrlLoading(true)
+  clearOpenApiUrlError()
+
+  let response
+  try {
+    response = await fetch(url, { method: 'GET' })
+  } catch (err) {
+    showOpenApiUrlError('Unable to fetch the URL. Check the link and CORS settings.')
+    setOpenApiUrlLoading(false)
+    return
+  }
+
+  if (!response.ok) {
+    showOpenApiUrlError(`Unable to fetch the URL (HTTP ${response.status}).`)
+    setOpenApiUrlLoading(false)
+    return
+  }
+
+  let text = ''
+  try {
+    text = await response.text()
+  } catch (err) {
+    showOpenApiUrlError('Unable to read the response body.')
+    setOpenApiUrlLoading(false)
+    return
+  }
+
+  const validation = validateOpenApiSpecText(text)
+  if (!validation.valid) {
+    showOpenApiUrlError(validation.message)
+    setOpenApiUrlLoading(false)
+    return
+  }
+
+  setOpenApiEditorContent(text)
+  showNotification('Loaded OpenAPI document.', 'success')
+  setOpenApiUrlLoading(false)
+  hideOpenApiPopover()
+}
+
+async function loadOpenApiFile(file) {
+  if (!file) {
+    return
+  }
+
+  let text = ''
+  try {
+    text = await file.text()
+  } catch (err) {
+    showNotification('Unable to read the selected file.', 'error')
+    return
+  }
+
+  const validation = validateOpenApiSpecText(text)
+  if (!validation.valid) {
+    showNotification(validation.message, 'error')
+    return
+  }
+
+  setOpenApiEditorContent(text)
+  showNotification(`Loaded ${file.name || 'file'}.`, 'success')
+  openApiFileState.pendingFile = null
+  hideOpenApiPopover()
+}
+
+function setOpenApiEditorContent(content) {
+  const editor = editors[2]
+  if (!editor) {
+    return
+  }
+
+  openApiState.lastLoadedContent = content
+  openApiState.isDirty = false
+  editor.setValue(content)
+  editor.clearSelection()
+}
+
+function validateOpenApiSpecText(rawText) {
+  const trimmed = rawText.trim()
+  if (!trimmed) {
+    return { valid: false, message: 'The response was empty.' }
+  }
+
+  if (looksLikeJson(trimmed)) {
+    let parsed
+    try {
+      parsed = JSON.parse(trimmed)
+    } catch (err) {
+      return { valid: false, message: 'Response is not valid JSON.' }
+    }
+
+    if (!isOpenApiRoot(parsed)) {
+      return { valid: false, message: 'Missing top-level openapi or swagger field.' }
+    }
+
+    return { valid: true }
+  }
+
+  if (hasOpenApiYamlHeader(trimmed)) {
+    return { valid: true }
+  }
+
+  return { valid: false, message: 'Missing top-level openapi or swagger field.' }
+}
+
+function looksLikeJson(text) {
+  const firstChar = text[0]
+  return firstChar === '{' || firstChar === '['
+}
+
+function isOpenApiRoot(parsed) {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return false
+  }
+
+  return Object.prototype.hasOwnProperty.call(parsed, 'openapi') ||
+    Object.prototype.hasOwnProperty.call(parsed, 'swagger')
+}
+
+function hasOpenApiYamlHeader(content) {
+  const lines = content.split(/\r?\n/)
+  let checked = 0
+
+  for (let i = 0; i < lines.length && checked < OPENAPI_URL_SCAN_LINES; i += 1) {
+    const rawLine = lines[i]
+    const trimmed = rawLine.trim()
+
+    if (!trimmed || trimmed.startsWith('#') || trimmed === '---' || trimmed === '...') {
+      continue
+    }
+
+    checked += 1
+
+    if (rawLine.length !== trimmed.length) {
+      continue
+    }
+
+    if (/^(openapi|swagger)\s*:/i.test(trimmed)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function showOpenApiUrlError(message) {
+  const errorEl = document.getElementById('openApiUrlError')
+  if (errorEl) {
+    errorEl.textContent = message
+    errorEl.style.display = 'block'
+  }
+
+  const input = document.getElementById('openApiUrlInput')
+  if (input) {
+    input.classList.add('is-invalid')
+  }
+
+  showNotification(message, 'error')
+}
+
+function clearOpenApiUrlError() {
+  const errorEl = document.getElementById('openApiUrlError')
+  if (errorEl) {
+    errorEl.textContent = ''
+    errorEl.style.display = 'none'
+  }
+
+  const input = document.getElementById('openApiUrlInput')
+  if (input) {
+    input.classList.remove('is-invalid')
+  }
+}
+
+function setOpenApiUrlLoading(isLoading) {
+  openApiUrlState.isLoading = isLoading
+
+  const loadBtn = document.getElementById('openApiUrlLoadBtn')
+  if (loadBtn) {
+    loadBtn.disabled = isLoading
+    loadBtn.textContent = isLoading ? 'Loading...' : 'Load'
+  }
+
+  const input = document.getElementById('openApiUrlInput')
+  if (input) {
+    input.disabled = isLoading
+  }
+}
+
+function hideOpenApiPopover() {
+  if (openApiUrlState.popover) {
+    openApiUrlState.popover.hide()
+  }
+}
+
+function isValidHttpUrl(value) {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch (err) {
+    return false
+  }
+}
 
 async function generate () {
   if (!aiElements) {
@@ -898,6 +1332,7 @@ function updateGenerateButtonState () {
 }
 
 initAiUi()
+initOpenApiUrlLoader()
 
 /**********************************************************************/
 /* LIBRARY FUNCTIONALITY                                              */
@@ -909,6 +1344,9 @@ const libraryState = {
   currentDeleteId: null,
   currentDeleteType: null,
   pendingLoad: null, // { id, type } - item waiting to be loaded after confirmation
+  pendingLoadItem: null, // cached item for load options modal
+  pendingLoadLocked: false, // prevent pendingLoad from being cleared when chaining modals
+  saveAndLoadPending: false,
   dirtyEditors: {
     rule: false,
     function: false
@@ -1021,9 +1459,28 @@ function setupLibraryEventListeners() {
   if (overwriteModal) {
     overwriteModal.addEventListener('hidden.bs.modal', () => {
       // Only clear if we didn't proceed with save first
-      if (!libraryState.saveAndLoadPending) {
-        libraryState.pendingLoad = null
+      if (!libraryState.saveAndLoadPending && !libraryState.pendingLoadLocked) {
+        clearPendingLoad()
       }
+    })
+  }
+
+  // Load options modal buttons
+  const loadReplaceBtn = document.getElementById('loadRuleReplaceBtn')
+  if (loadReplaceBtn) {
+    loadReplaceBtn.addEventListener('click', () => handleLoadRuleChoice('replace'))
+  }
+
+  const loadAppendBtn = document.getElementById('loadRuleAppendBtn')
+  if (loadAppendBtn) {
+    loadAppendBtn.addEventListener('click', () => handleLoadRuleChoice('append'))
+  }
+
+  // Clear pending load state when load options modal is dismissed
+  const loadModeModal = document.getElementById('loadRuleModeModal')
+  if (loadModeModal) {
+    loadModeModal.addEventListener('hidden.bs.modal', () => {
+      clearPendingLoad()
     })
   }
 
@@ -1033,7 +1490,7 @@ function setupLibraryEventListeners() {
     saveModal.addEventListener('hidden.bs.modal', () => {
       if (libraryState.saveAndLoadPending) {
         libraryState.saveAndLoadPending = false
-        libraryState.pendingLoad = null
+        clearPendingLoad()
       }
     })
   }
@@ -1193,10 +1650,8 @@ function handleSaveItem() {
 
     // If there's a pending load, perform it now
     if (libraryState.saveAndLoadPending && libraryState.pendingLoad) {
-      const { id, type: loadType } = libraryState.pendingLoad
       libraryState.saveAndLoadPending = false
-      libraryState.pendingLoad = null
-      performLoad(id, loadType)
+      startLoadFlow()
     }
   } else {
     // Show error
@@ -1211,14 +1666,15 @@ function handleSaveItem() {
  * @param {string} type - 'rule' or 'function'
  */
 function loadLibraryItem(id, type) {
+  libraryState.pendingLoad = { id, type }
+
   // Check if editor has unsaved changes
   if (libraryState.dirtyEditors[type]) {
-    libraryState.pendingLoad = { id, type }
     showOverwriteModal(type)
     return
   }
 
-  performLoad(id, type)
+  startLoadFlow()
 }
 
 /**
@@ -1226,18 +1682,48 @@ function loadLibraryItem(id, type) {
  * @param {string} id - Item ID
  * @param {string} type - 'rule' or 'function'
  */
-function performLoad(id, type) {
-  const item = type === 'rule' ? LibraryManager.loadRule(id) : LibraryManager.loadFunction(id)
-
-  if (!item) {
-    showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} not found.`, 'error')
+function startLoadFlow() {
+  const { id, type } = libraryState.pendingLoad || {}
+  if (!id || !type) {
     return
   }
 
-  // Load content into appropriate editor
+  const item = type === 'rule' ? LibraryManager.loadRule(id) : LibraryManager.loadFunction(id)
+  if (!item) {
+    showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} not found.`, 'error')
+    clearPendingLoad()
+    return
+  }
+
+  if (type === 'rule') {
+    libraryState.pendingLoadItem = item
+    showLoadRuleModal(item.name)
+    return
+  }
+
+  applyLoadItem(item, type, 'replace')
+  clearPendingLoad()
+}
+
+function applyLoadItem(item, type, mode) {
   const editorIndex = type === 'rule' ? 0 : 1
-  editors[editorIndex].setValue(item.content)
-  editors[editorIndex].clearSelection()
+  const editor = editors[editorIndex]
+
+  if (type === 'rule' && mode === 'append') {
+    const currentContent = editor.getValue()
+    const separator = currentContent.trim() ? '\n\n' : ''
+    const appendedContent = stripRuleHeader(item.content)
+    editor.setValue(currentContent + separator + appendedContent)
+    editor.clearSelection()
+    libraryState.loadedItems[type] = null
+    libraryState.dirtyEditors[type] = true
+    highlightLibraryItem(item.id, type)
+    showNotification(`Appended "${item.name}"`, 'success')
+    return
+  }
+
+  editor.setValue(item.content)
+  editor.clearSelection()
 
   // Update saved content and clear dirty state
   libraryState.lastSavedContent[type] = item.content
@@ -1247,9 +1733,37 @@ function performLoad(id, type) {
   libraryState.loadedItems[type] = { id: item.id, name: item.name }
 
   // Highlight the loaded item
-  highlightLibraryItem(id, type)
+  highlightLibraryItem(item.id, type)
 
   showNotification(`Loaded "${item.name}"`, 'success')
+}
+
+function stripRuleHeader(content) {
+  if (!content) {
+    return ''
+  }
+
+  const lines = content.split(/\r?\n/)
+  let firstIndex = 0
+  while (firstIndex < lines.length && lines[firstIndex].trim() === '') {
+    firstIndex += 1
+  }
+
+  if (firstIndex + 1 < lines.length) {
+    const firstLine = lines[firstIndex].trim()
+    const secondLine = lines[firstIndex + 1].trim()
+    if (firstLine.startsWith('functions:') && secondLine.startsWith('rules:')) {
+      lines.splice(firstIndex, 2)
+    }
+  }
+
+  return lines.join('\n').replace(/^\n+/, '')
+}
+
+function clearPendingLoad() {
+  libraryState.pendingLoad = null
+  libraryState.pendingLoadItem = null
+  libraryState.pendingLoadLocked = false
 }
 
 /**
@@ -1263,6 +1777,40 @@ function showOverwriteModal(type) {
 }
 
 /**
+ * Show load rule mode modal
+ * @param {string} name - Rule name
+ */
+function showLoadRuleModal(name) {
+  const nameEl = document.getElementById('loadRuleName')
+  if (nameEl) {
+    nameEl.textContent = name || 'this rule'
+  }
+  const modal = new bootstrap.Modal(document.getElementById('loadRuleModeModal'))
+  modal.show()
+}
+
+/**
+ * Handle load rule selection (replace or append)
+ * @param {string} mode - 'replace' or 'append'
+ */
+function handleLoadRuleChoice(mode) {
+  const modalElement = document.getElementById('loadRuleModeModal')
+  const modal = bootstrap.Modal.getInstance(modalElement)
+  if (modal) {
+    modal.hide()
+  }
+
+  const item = libraryState.pendingLoadItem
+  if (!item) {
+    clearPendingLoad()
+    return
+  }
+
+  applyLoadItem(item, 'rule', mode)
+  clearPendingLoad()
+}
+
+/**
  * Handle discard changes - proceed with load without saving
  */
 function handleDiscardChanges() {
@@ -1271,12 +1819,13 @@ function handleDiscardChanges() {
   // Close modal
   const modalElement = document.getElementById('overwriteConfirmModal')
   const modal = bootstrap.Modal.getInstance(modalElement)
+  libraryState.pendingLoadLocked = true
   modal.hide()
 
   if (id && type) {
     // Clear dirty state and perform load
     libraryState.dirtyEditors[type] = false
-    performLoad(id, type)
+    startLoadFlow()
   }
 
   libraryState.pendingLoad = null
@@ -1290,6 +1839,7 @@ function handleSaveFirst() {
 
   // Close overwrite modal
   const overwriteModal = bootstrap.Modal.getInstance(document.getElementById('overwriteConfirmModal'))
+  libraryState.pendingLoadLocked = true
   overwriteModal.hide()
 
   if (type) {
