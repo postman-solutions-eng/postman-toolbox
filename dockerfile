@@ -1,6 +1,6 @@
-FROM node:17-alpine
+FROM node:20-alpine
 COPY ./ /app/
 WORKDIR /app
-RUN npm install
+RUN npm ci --omit=dev
 EXPOSE 3001
-CMD node app.js
+CMD ["node", "app.js"]
