@@ -5,7 +5,5 @@ services:
     build:
       context: ./
       dockerfile: dockerfile
-    environment:
-      - OPENAI_API_KEY=ABC123
     ports:
       - 3001:3001

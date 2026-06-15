@@ -750,7 +750,7 @@ async function generate () {
     return
   }
 
-  if (aiState.keySource === 'user' && !aiState.validatedKey) {
+  if (!aiState.validatedKey) {
     setKeyStatus('Validate your key before generating.', 'warning')
     // Open settings dropdown to show the key input
     const settingsDropdown = document.getElementById('aiSettingsDropdown')
@@ -864,15 +864,27 @@ async function generateWithServer (prompt, codeblock, setResultText) {
     cache: 'no-cache',
     credentials: 'same-origin',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + aiState.validatedKey
     },
     body: JSON.stringify({
       prompt: prompt
     })
   })
 
-  if (response.status === 501 || response.status === 403) {
+  if (response.status === 501) {
     setResultText('Server-side AI is disabled.')
+    return
+  }
+
+  if (response.status === 401) {
+    if (getStoredKeyPayload()) {
+      clearStoredKey('Stored key is invalid and was cleared.', 'error')
+    } else {
+      aiState.validatedKey = ''
+      setKeyStatus('Invalid or unauthorized key.', 'error')
+    }
+    setResultText('Invalid or unauthorized OpenAI key.')
     return
   }
 
@@ -1096,10 +1108,6 @@ function getCandidateKey () {
 }
 
 async function validateKey (options) {
-  if (aiState.keySource !== 'user') {
-    return
-  }
-
   const opts = options || {}
   const key = opts.keyOverride || getCandidateKey()
   if (!key) {
@@ -1320,8 +1328,8 @@ function updateGenerateButtonState () {
   const canGenerate =
     !aiState.isGenerating &&
     !rateLimitState.limited &&
-    ((aiState.keySource === 'server' && enableServerAi) ||
-      (aiState.keySource === 'user' && !!aiState.validatedKey))
+    !!aiState.validatedKey &&
+    (aiState.keySource === 'user' || (aiState.keySource === 'server' && enableServerAi))
 
   if (canGenerate) {
     aiElements.generateButton.disabled = false
