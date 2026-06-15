@@ -93,8 +93,6 @@ app.use((req, res, next) => {
   next()
 })
 
-// Apply the rate limiting middleware to API calls only
-app.use('/api', apiLimiter)
 
 //Set the view engine
 app.engine('hbs', hbs.engine)
@@ -151,7 +149,7 @@ app.get('/test-reporter', (req, res) => {
 app.get('/ip', (request, response) => response.send(request.ip))
 
 // render the main.hbs layout and the index.hbs file
-app.post('/api/generate', requireSameOrigin, express.json({ limit: '64kb' }), (req, res) => {
+app.post('/api/generate', requireSameOrigin, apiLimiter, express.json({ limit: '64kb' }), (req, res) => {
   if (!enableServerAi) {
     return res.status(501).json({
       error: 'Server-side AI is disabled.'
@@ -161,6 +159,20 @@ app.post('/api/generate', requireSameOrigin, express.json({ limit: '64kb' }), (r
   if (!systemPrompt) {
     return res.status(500).json({
       error: 'System prompt is unavailable.'
+    })
+  }
+
+  const authHeader = req.headers.authorization || ''
+  const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i)
+  if (!bearerMatch) {
+    return res.status(401).json({
+      error: 'Missing or malformed Authorization header. Expected: Bearer <api-key>.'
+    })
+  }
+  const apiKey = bearerMatch[1].trim()
+  if (!apiKey) {
+    return res.status(401).json({
+      error: 'Missing API key.'
     })
   }
 
@@ -175,7 +187,7 @@ app.post('/api/generate', requireSameOrigin, express.json({ limit: '64kb' }), (r
       error: `Prompt too long. Maximum ${MAX_PROMPT_LENGTH} characters.`
     })
   } else {
-    const openai = new OpenAI()
+    const openai = new OpenAI({ apiKey })
     openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -211,6 +223,12 @@ app.post('/api/generate', requireSameOrigin, express.json({ limit: '64kb' }), (r
       })
       .catch(err => {
         console.log(err)
+        if (err && err.status === 401) {
+          console.log(new Date(), 'AI Error - OpenAI rejected the API key.')
+          return res.status(401).json({
+            error: 'Invalid OpenAI API key.'
+          })
+        }
         console.log(new Date(), 'AI Error - Generic Error thrown.')
         res.status(400).json({
           error: 'Error with prompt provided.'
