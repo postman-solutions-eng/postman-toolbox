@@ -41,7 +41,7 @@ const validateLimiter = rateLimit({
 })
 
 const enableServerAi = /^true$/i.test(process.env.ENABLE_SERVER_AI || '')
-const systemPromptPath = path.join(__dirname, 'views', 'assets', 'prompts', 'system.json')
+const systemPromptPath = path.join(__dirname, 'prompts', 'system.json')
 let systemPrompt = ''
 
 try {
@@ -70,7 +70,9 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
+      // 'unsafe-eval' is needed because Handlebars.compile() runs in the browser
+      // (see views/assets/js/testComposer.js) and uses new Function() internally.
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
       imgSrc: ["'self'", 'data:'],
@@ -98,13 +100,6 @@ app.use('/api', apiLimiter)
 app.engine('hbs', hbs.engine)
 app.set('view engine', 'hbs')
 
-app.use(
-  express.urlencoded({
-    limit: '5mb',
-    extended: true
-  })
-)
-
 app.use((req, res, next) => {
   const origin = req.headers.origin
   if (origin && corsAllowedOrigins.includes(origin)) {
@@ -113,6 +108,21 @@ app.use((req, res, next) => {
   }
   next()
 })
+
+// CSRF guard for state-changing routes. Browsers always send an Origin header
+// on cross-origin POSTs; if it's present and doesn't match this server or the
+// allowlist, the request is from a third-party page acting on a user's behalf.
+// Non-browser callers (curl, server-to-server) don't send Origin, so those pass.
+function requireSameOrigin (req, res, next) {
+  const origin = req.headers.origin
+  if (!origin) return next()
+  const selfOrigin = `${req.protocol}://${req.headers.host}`
+  if (origin === selfOrigin || corsAllowedOrigins.includes(origin)) return next()
+  console.log(new Date(), `Forbidden cross-origin POST to ${req.path} from ${origin}`)
+  return res.status(403).json({ error: 'Forbidden: cross-origin request.' })
+}
+
+const validateBodyParser = express.urlencoded({ limit: '5mb', extended: true })
 
 // render the main.hbs layout and the index.hbs file
 app.get('/', (req, res) => {
@@ -141,7 +151,7 @@ app.get('/test-reporter', (req, res) => {
 app.get('/ip', (request, response) => response.send(request.ip))
 
 // render the main.hbs layout and the index.hbs file
-app.post('/api/generate', express.json(), (req, res) => {
+app.post('/api/generate', requireSameOrigin, express.json({ limit: '64kb' }), (req, res) => {
   if (!enableServerAi) {
     return res.status(501).json({
       error: 'Server-side AI is disabled.'
@@ -209,7 +219,7 @@ app.post('/api/generate', express.json(), (req, res) => {
   }
 })
 
-app.post('/validate', validateLimiter, (req, res) => {
+app.post('/validate', requireSameOrigin, validateLimiter, validateBodyParser, (req, res) => {
   let spectralRule = req.body.spectralRule
   let openApiSpec = req.body.openApiSpec
   let customFunctions = req.body.spectralCustomFunctions

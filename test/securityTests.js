@@ -118,6 +118,60 @@ describe('Security: HTTP layer', () => {
     expect(res.headers.get('access-control-allow-origin')).to.equal(null)
   })
 
+  it('rejects POST /validate from a foreign origin with 403', async () => {
+    const res = await fetch(`${baseUrl}/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Origin: 'https://evil.example'
+      },
+      body: 'spectralRule=x&openApiSpec=y'
+    })
+    expect(res.status).to.equal(403)
+    const body = await res.json()
+    expect(body.error).to.match(/cross-origin/i)
+  })
+
+  it('rejects POST /api/generate from a foreign origin with 403', async () => {
+    const res = await fetch(`${baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://evil.example'
+      },
+      body: JSON.stringify({ prompt: 'hi' })
+    })
+    expect(res.status).to.equal(403)
+  })
+
+  it('allows POST /validate with a same-origin Origin header', async () => {
+    const res = await fetch(`${baseUrl}/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Origin: baseUrl
+      },
+      body: 'spectralRule=&openApiSpec='
+    })
+    // CSRF guard passes; the empty ruleset triggers a 500 from the validator.
+    // The key thing is we did NOT get a 403.
+    expect(res.status).to.not.equal(403)
+  })
+
+  it('allows POST /validate with no Origin header (non-browser caller)', async () => {
+    const res = await fetch(`${baseUrl}/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'spectralRule=&openApiSpec='
+    })
+    expect(res.status).to.not.equal(403)
+  })
+
+  it('does not publicly serve prompts/system.json', async () => {
+    const res = await fetch(`${baseUrl}/prompts/system.json`)
+    expect(res.status).to.equal(404)
+  })
+
   it('rejects bodies over the 5MB urlencoded cap with 413', async () => {
     const huge = 'x'.repeat(6 * 1024 * 1024) // 6 MB
     const res = await fetch(`${baseUrl}/validate`, {
